@@ -19,7 +19,11 @@
 <div class="app-container">
   <div class="navbar">
     <div class="brand-logo">⚡ AI Smart Meeting System</div>
-    <div>trainee1405@company.com <span class="user-badge">管理者</span></div>
+    <div>
+      trainee1405@company.com <span class="user-badge">管理者</span>
+      <!-- ⚙️ グループ管理ボタン -->
+      <button type="button" class="btn-secondary" style="margin-left: 10px; padding: 4px 10px; font-size: 8.5pt;" onclick="openGroupModal()">⚙️ グループ管理</button>
+    </div>
   </div>
 
   <div class="main-content">
@@ -31,12 +35,11 @@
         <form action="${pageContext.request.contextPath}/dashboard" method="GET" class="search-box-group" onsubmit="validateForm(event)">
           <input type="hidden" name="showAll" value="${showAll}">
           
-          <!-- 入力欄とエラー吹き出しを同じ親要素で囲む -->
+          <!-- 入力欄とエラー吹き出し -->
           <div style="position: relative; display: inline-block;">
             <input type="text" id="searchInput" name="keyword" class="search-box" 
                    placeholder="🔍 会議・キーワード検索..." value="<c:out value='${keyword}'/>" oninput="checkInputValidation()">
             
-            <!-- 吹き出し（入力欄のすぐ真下に固定） -->
             <div id="validationError" class="error-message"></div>
           </div>
 
@@ -71,6 +74,7 @@
               </c:when>
               <c:otherwise>
                 <c:forEach var="m" items="${meetings}">
+                  <!-- 会議カードクリックで SCR-03 議事録詳細画面へ遷移 -->
                   <div class="meeting-item" onclick="location.href='${pageContext.request.contextPath}/meetings/detail?id=${m.meetingId}'">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                       <div class="meeting-title"><c:out value="${m.title}"/></div>
@@ -97,15 +101,13 @@
                     <!-- AI要約の有無による表示分岐 -->
                     <c:choose>
                       <c:when test="${not empty m.aiSummary}">
-                        <!-- 要約あり：通常の青枠スタイル -->
                         <div class="ai-summary-box">
                           <b>✨ Gemini AI要約</b><br>
                           <c:out value="${m.aiSummary}"/>
                         </div>
                       </c:when>
                       <c:otherwise>
-                        <!-- 要約なし：点線＋未作成のアラートスタイル -->
-                        <div class="ai-summary-box" style="background-color: #fffbebfb; border: 1.5px dashed #f59e0b; color: #b45309; text-align: center; padding: 12px;">
+                        <div class="ai-summary-box" style="background-color: #fffbebfb; border: 1.5px dashed #f59e0b; color: #b45309; text-align: center; padding: 8px 12px;">
                           <b>⚠️ 議事録・要約未作成</b><br>
                           <span style="font-size: 8pt; color: #d97706;">クリックして議事録入力＆AI要約を生成</span>
                         </div>
@@ -157,65 +159,20 @@
   </div>
 </div>
 
-<!-- 新規会議作成ポップアップ（モーダル） -->
-<div id="createMeetingModal" class="modal-overlay">
-  <div class="modal-content">
-    <div class="modal-header">
-      <span>📅 新規会議を作成</span>
-      <button type="button" class="modal-close-btn" onclick="closeModal()">&times;</button>
-    </div>
-    
-    <form action="${pageContext.request.contextPath}/meetings/create" method="POST">
-      <div class="form-group">
-        <label class="form-label">会議タイトル <span style="color: #ef4444;">*</span></label>
-        <input type="text" name="title" class="form-input" placeholder="例：週次進捗確認ミーティング" required>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">開催日時 <span style="color: #ef4444;">*</span></label>
-        <input type="datetime-local" name="startTime" class="form-input" required>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">要約ペルソナ設定</label>
-        <select name="personaType" class="form-select">
-          <option value="default">標準（標準的なビジネス要約）</option>
-          <option value="tsundere">ツンデレ秘書（ツンツンしながら要約）</option>
-          <option value="hotblooded">熱血上司（熱く成果を鼓舞）</option>
-        </select>
-      </div>
-      
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" onclick="closeModal()">キャンセル</button>
-        <button type="submit" name="actionType" value="saveOnly" class="btn-secondary" style="background-color: #e2e8f0; color: #0f172a;">保存</button>
-        <button type="submit" name="actionType" value="goToDetail" class="btn-primary">保存して要約作成へ</button>
-      </div>
-    </form>
-  </div>
-</div>
+<!-- モーダルファイルのインクルード -->
+<jsp:include page="modal-create-meeting.jsp" />
+<jsp:include page="modal-group-management.jsp" />
 
 <script>
-  function openModal() {
-    const modal = document.getElementById('createMeetingModal');
-    if (modal) {
-      modal.style.display = 'flex';
-    }
-  }
-
-  function closeModal() {
-    const modal = document.getElementById('createMeetingModal');
-    if (modal) {
-      modal.style.display = 'none';
-    }
-  }
-
+  // 共通背景クリックでモーダルを閉じる処理
   window.onclick = function(event) {
-    const modal = document.getElementById('createMeetingModal');
-    if (event.target === modal) {
-      closeModal();
-    }
+    const meetingModal = document.getElementById('createMeetingModal');
+    const groupModal = document.getElementById('groupManagementModal');
+    if (event.target === meetingModal && typeof closeModal === 'function') closeModal();
+    if (event.target === groupModal && typeof closeGroupModal === 'function') closeGroupModal();
   };
 
+  // 検索バリデーション
   function checkInputValidation() {
     const inputElem = document.getElementById('searchInput');
     const errorElem = document.getElementById('validationError');
