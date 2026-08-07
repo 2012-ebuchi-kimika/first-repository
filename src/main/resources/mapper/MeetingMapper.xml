@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.meeting_app_api.mapper.MeetingMapper">
+
+    <select id="findAll" resultType="com.example.meeting_app_api.entity.Meeting">
+        SELECT m.* 
+        FROM meetings m
+        <where>
+            <if test="keyword != null and keyword != ''">
+                (m.title LIKE CONCAT('%', #{keyword}, '%')
+                OR m.ai_summary LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="!showAll">
+                <![CDATA[
+                AND (
+                    m.start_time >= DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m-01')
+                    OR EXISTS (
+                        SELECT 1 FROM tasks t 
+                        WHERE t.meeting_id = m.meeting_id 
+                        AND t.status != 'COMPLETED'
+                    )
+                )
+                ]]>
+            </if>
+        </where>
+        <!-- 
+            スマートソート順:
+            1. 未来の予定（現在時刻より後）を上に、過去の会議を下にグループ分け
+            2. 未来の予定の中では「開催日時が近い順（昇順 ASC）」
+            3. 過去の会議の中では「開催日時が新しい順（降順 DESC）」
+        -->
+        <![CDATA[
+        ORDER BY 
+            CASE WHEN m.start_time >= NOW() THEN 0 ELSE 1 END ASC,
+            CASE WHEN m.start_time >= NOW() THEN m.start_time END ASC,
+            CASE WHEN m.start_time < NOW() THEN m.start_time END DESC
+        ]]>
+    </select>
+
+    <insert id="insert" parameterType="com.example.meeting_app_api.entity.Meeting" useGeneratedKeys="true" keyProperty="meetingId">
+        INSERT INTO meetings (
+            title,
+            start_time,
+            persona_type,
+            created_at
+        ) VALUES (
+            #{title},
+            #{startTime},
+            #{personaType},
+            NOW()
+        )
+    </insert>
+
+</mapper>

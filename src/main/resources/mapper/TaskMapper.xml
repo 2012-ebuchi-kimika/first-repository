@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.meeting_app_api.mapper.TaskMapper">
+
+    <select id="findAll" resultType="com.example.meeting_app_api.entity.Task">
+        SELECT 
+            t.*,
+            m.title AS meetingTitle
+        FROM tasks t
+        LEFT JOIN meetings m ON t.meeting_id = m.meeting_id
+        ORDER BY 
+            t.due_date IS NULL ASC,  -- 締切設定ありを優先
+            t.due_date ASC,          -- 締切が近い順
+            t.created_at DESC
+    </select>
+
+</mapper>

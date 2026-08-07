@@ -1,0 +1,413 @@
+/* ==========================================================================
+   全体基本設定（画面全体スクロールの抑制）
+   ========================================================================== */
+
+/* 画面全体のルート設定（ブラウザのスクロールバーを完全に無効化） */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background-color: #f1f5f9;
+    color: #0f172a;
+    box-sizing: border-box;
+}
+
+/* 全体コンテナ */
+.app-container {
+    width: calc(100% - 40px);
+    max-width: 1400px;
+    height: calc(100vh - 40px);
+    margin: 20px auto;
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* ==========================================================================
+   ヘッダー・ナビゲーションエリア
+   ========================================================================== */
+
+.navbar {
+    background-color: #ffffff;
+    padding: 14px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.brand-logo {
+    font-size: 16pt;
+    font-weight: bold;
+    color: #0284c7;
+}
+
+.user-badge {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 8pt;
+    font-weight: bold;
+}
+
+
+/* ==========================================================================
+   メインコンテンツ・操作バー
+   ========================================================================== */
+
+.main-content {
+    padding: 12px 20px;
+    background-color: #f8fafc;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.action-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.btn-primary {
+    background-color: #0284c7;
+    color: #ffffff;
+    padding: 0 18px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 9.5pt;
+    text-decoration: none;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    cursor: pointer;
+    border: none;
+}
+
+.search-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-bottom: relative !important;
+}
+
+.search-box-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    position: relative;
+}
+
+.search-box {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    padding: 0 14px;
+    border-radius: 8px;
+    width: 220px;
+    height: 40px;
+    font-size: 9.5pt;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.search-box.error {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.btn-secondary {
+    background-color: #e2e8f0;
+    color: #334155;
+    padding: 0 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 9.5pt;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+/* 検索入力欄の直下に浮かび上がる吹き出し */
+.error-message {
+    color: #dc2626;
+    font-size: 8pt;
+    font-weight: bold;
+    position: absolute;
+    top: 44px; /* 検索ボックス（高さ40px）のすぐ真下に配置 */
+    left: 0;   /* 入力欄の左端に合わせる */
+    background-color: #fef2f2;
+    border: 1px solid #fca5a5;
+    padding: 4px 8px;
+    border-radius: 6px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 999;
+    white-space: nowrap;
+}
+
+/* メッセージが空の時は枠線や背景を消す */
+.error-message:empty {
+    display: none;
+}
+
+/* ==========================================================================
+   ダッシュボード・グリッドレイアウト
+   ========================================================================== */
+
+.layout-grid {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px !important;
+    flex: 1;
+    overflow: hidden;
+}
+
+.left-col {
+    flex: 6;
+    display: flex;
+    flex-direction: column;
+}
+
+.right-col {
+    flex: 4;
+    display: flex;
+    flex-direction: column;
+}
+
+.card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 18px;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-header {
+    font-size: 11pt;
+    font-weight: bold;
+    color: #0f172a;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+}
+
+
+/* ==========================================================================
+   カード内可変スクロール領域＆カスタムスクロールバー
+   ========================================================================== */
+
+.scrollable-area {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.scrollable-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollable-area::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+}
+
+.scrollable-area::-webkit-scrollbar-track {
+    background-color: #f1f5f9;
+}
+
+
+/* ==========================================================================
+   コンテンツ要素（会議アイテム・タスク行・バッジ）
+   ========================================================================== */
+
+.meeting-item {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #0284c7;
+    padding: 14px;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.meeting-item:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    border-left-color: #0369a1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.meeting-title {
+    font-size: 10.5pt;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.meeting-date {
+    font-size: 8.5pt;
+    color: #64748b;
+    margin-bottom: 10px;
+}
+
+.ai-summary-box {
+    background-color: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 9pt;
+    color: #0369a1;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.task-row {
+    border-bottom: 1px solid #f1f5f9;
+    padding: 10px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.task-row:hover {
+    background-color: #f1f5f9;
+}
+
+.badge-due {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 7.5pt;
+    font-weight: bold;
+}
+
+.badge-status {
+    background-color: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 8pt;
+    font-weight: bold;
+}
+
+
+/* ==========================================================================
+   新規作成モーダル（サブ画面ポップアップ）
+   ========================================================================== */
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #ffffff;
+    width: 500px;
+    max-width: 90%;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    border: 1px solid #cbd5e1;
+    box-sizing: border-box;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    font-size: 12pt;
+    color: #0f172a;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 18pt;
+    color: #64748b;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.modal-close-btn:hover {
+    color: #0f172a;
+}
+
+.form-group {
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.form-label {
+    display: block;
+    font-size: 9pt;
+    font-weight: bold;
+    color: #334155;
+    margin-bottom: 6px;
+}
+
+.form-input, .form-select {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 9.5pt;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.form-input:focus, .form-select:focus {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
+}

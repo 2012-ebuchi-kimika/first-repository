@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.meeting_app_api.mapper.GroupMapper">
+
+    <select id="findAllGroups" resultType="com.example.meeting_app_api.entity.Group">
+        SELECT * 
+        FROM groups
+    </select>
+
+    <select id="findAllGroupMembers" resultType="com.example.meeting_app_api.entity.GroupMember">
+        SELECT * 
+        FROM group_members
+    </select>
+
+</mapper>
