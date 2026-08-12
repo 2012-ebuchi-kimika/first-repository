@@ -6,6 +6,7 @@ import com.example.meeting_app_api.entity.User;
 import com.example.meeting_app_api.mapper.MeetingMapper;
 import com.example.meeting_app_api.mapper.TaskMapper;
 import com.example.meeting_app_api.mapper.UserMapper;
+import com.example.meeting_app_api.service.AiService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class MeetingController {
@@ -23,11 +25,14 @@ public class MeetingController {
     private final MeetingMapper meetingMapper;
     private final TaskMapper taskMapper;
     private final UserMapper userMapper;
+    private final AiService aiService;
 
-    public MeetingController(MeetingMapper meetingMapper, TaskMapper taskMapper, UserMapper userMapper) {
+    // AiService をコンストラクタ注入
+    public MeetingController(MeetingMapper meetingMapper, TaskMapper taskMapper, UserMapper userMapper, AiService aiService) {
         this.meetingMapper = meetingMapper;
         this.taskMapper = taskMapper;
         this.userMapper = userMapper;
+        this.aiService = aiService;
     }
 
     // 【SCR-03】議事録AI生成画面を表示するハンドラメソッド
@@ -49,7 +54,6 @@ public class MeetingController {
 
         // 4. 対象の会議IDが選択されている場合、保存済みAI要約の取得および既存タスク一覧を取得
         if (id != null) {
-            // ★ findById メソッドの代わりに取得済みの meetings 一覧から対象の会議を抽出してモデルへセット
             meetings.stream()
                     .filter(m -> m.getMeetingId() != null && m.getMeetingId().longValue() == id)
                     .findFirst()
@@ -57,7 +61,6 @@ public class MeetingController {
 
             List<Task> existingTasks = taskMapper.findByMeetingId(id);
 
-            // カンマ区切りのメールアドレスにも対応してユーザー名（氏名）に変換
             for (Task task : existingTasks) {
                 String assigneeEmail = task.getAssigneeEmail();
                 if (assigneeEmail != null && !assigneeEmail.trim().isEmpty()) {
@@ -71,7 +74,7 @@ public class MeetingController {
                                     .filter(u -> trimmedEmail.equalsIgnoreCase(u.getEmail()))
                                     .map(User::getName)
                                     .findFirst()
-                                    .orElse(trimmedEmail); // マッチしない場合は元のメールを表示
+                                    .orElse(trimmedEmail);
                             names.add(name);
                         }
                     }
@@ -85,6 +88,17 @@ public class MeetingController {
         }
 
         return "meeting-detail";
+    }
+
+    // ★【新規追加】Gemini APIを非同期で呼び出して解析結果を返す非同期API
+    @PostMapping("/meetings/analyze")
+    @ResponseBody
+    public Map<String, Object> analyzeMeeting(
+            @RequestParam("transcript") String transcript,
+            @RequestParam(name = "personaType", defaultValue = "default") String personaType) {
+        
+        // Gemini API呼び出しサービスを実行
+        return aiService.analyzeTranscript(transcript, personaType);
     }
 
     // AI要約 ＆ 抽出タスクのDB保存処理ハンドラ
@@ -123,7 +137,6 @@ public class MeetingController {
             @ModelAttribute Meeting meeting,
             @RequestParam(name = "actionType", defaultValue = "saveOnly") String actionType) {
 
-        // DBに会議を新規登録
         meetingMapper.insert(meeting);
 
         if ("goToDetail".equals(actionType)) {

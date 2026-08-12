@@ -142,7 +142,6 @@
                       <!-- Task.java の taskContent フィールドを参照 -->
                       <span style="font-weight: bold; color: #1e293b;">・<c:out value="${task.taskContent}"/></span>
                       <span style="font-size: 7.5pt; color: #64748b; margin-left: 6px;">
-                        <!-- ★ assigneeName（ユーザー名）を優先表示するよう修正 -->
                         (担当: <c:out value="${empty task.assigneeName ? (empty task.assigneeEmail ? '未割当' : task.assigneeEmail) : task.assigneeName}"/> / 締切: <c:out value="${empty task.dueDate ? '期限なし' : task.dueDate}"/>)
                       </span>
                     </div>
@@ -174,6 +173,7 @@
     event.preventDefault();
     
     const meetingId = document.getElementById('meetingSelect').value;
+    const transcript = document.getElementById('transcriptInput').value;
     const persona = document.getElementById('personaSelect').value;
     const btn = document.getElementById('aiBtn');
     
@@ -182,59 +182,86 @@
       return false;
     }
 
+    if (!transcript.trim()) {
+      alert("文字起こしテキストを入力してください。");
+      return false;
+    }
+
+    // ボタン非活性化と読み込み表示
     btn.innerText = '⏳ Gemini AIで解析中...';
     btn.disabled = true;
 
-    setTimeout(() => {
-      let mockSummary = "";
-      if (persona === 'tsundere') {
-        mockSummary = "べ、別にあなたのためにまとめたわけじゃないんだからね！Day 3のDB設計が終わったからって調子に乗らないでよ？次回までにFastAPIの基盤作成を終わらせなさいよね！";
-      } else if (persona === 'hotblooded') {
-        mockSummary = "素晴らしい進捗だ！Day 3のDB設計完了おめでとう！この熱量のまま次のFastAPI基盤作成も限界突破で突き進もうぜ！！";
-      } else if (persona === 'nerv') {
-        mockSummary = "状況報告。DB設計フェーズ完了。ただちにFastAPIの基盤作成フェーズへと移行せよ。";
+    // ★ 実行時に前回の要約表示欄をクリア・表示領域の準備
+    document.getElementById('emptyPreview').style.display = 'none';
+    document.getElementById('resultPreviewArea').style.display = 'block';
+    document.getElementById('summaryCardLabel').innerText = '【✨ 生成されたAI要約】';
+    document.getElementById('previewSummary').innerText = '⏳ AI解析を実行中です...';
+    document.getElementById('previewTasks').innerHTML = '';
+    document.getElementById('newTasksContainer').style.display = 'none';
+    document.getElementById('saveBtn').style.display = 'none';
+
+    // フォームデータの構築
+    const formData = new URLSearchParams();
+    formData.append('transcript', transcript);
+    formData.append('personaType', persona);
+
+    fetch('${pageContext.request.contextPath}/meetings/analyze', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      const summary = data.summary || "要約が生成されませんでした。";
+      const taskTitle = data.taskTitle || "";
+      const taskAssignee = data.taskAssignee || "";
+      const taskDueDate = data.taskDueDate || "";
+
+      // Geminiから抽出されたタスクのHTML組み立て
+      let taskHtml = "";
+      if (taskTitle) {
+        taskHtml = `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0;">
+            <div><b>・\${taskTitle}</b> <span style="color: #64748b;">(AI自動抽出)</span></div>
+            <span style="background-color: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 4px; font-size: 7.5pt; font-weight: bold;">
+              担当: \${taskAssignee || '未指定'} / 期限: \${taskDueDate || '未指定'}
+            </span>
+          </div>
+        `;
       } else {
-        mockSummary = "会議にてDay 3のDB設計完了が確認されました。次回までにFastAPIの基盤作成を実施予定です。";
+        taskHtml = `<div style="color: #94a3b8;">今回のテキストからタスクは検出されませんでした</div>`;
       }
 
-      const mockTask = {
-        title: "FastAPIの基盤作成",
-        assignee: "sato@company.com",
-        dueDate: "2026-08-20"
-      };
-
-      const mockTaskHtml = `
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0;">
-          <div><b>・\${mockTask.title}</b> <span style="color: #64748b;">(AI自動抽出)</span></div>
-          <span style="background-color: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 4px; font-size: 7.5pt; font-weight: bold;">
-            担当: \${mockTask.assignee} / 期限: \${mockTask.dueDate}
-          </span>
-        </div>
-      `;
-
-      // プレビュー表示制御の切替
-      document.getElementById('emptyPreview').style.display = 'none';
-      document.getElementById('resultPreviewArea').style.display = 'block';
-      
-      // 新規抽出タスクエリアと保存ボタンを表示
+      // 新規タスクエリアを表示
       document.getElementById('newTasksContainer').style.display = 'block';
-      document.getElementById('saveBtn').style.display = 'block';
 
-      // プレビュー表示内容の更新
-      document.getElementById('summaryCardLabel').innerText = '【✨ 生成されたAI要約】';
-      document.getElementById('previewSummary').innerText = mockSummary;
-      document.getElementById('previewTasks').innerHTML = mockTaskHtml;
+      // エラーが含まれていなければ保存ボタンを表示
+      if (!summary.includes("⚠️")) {
+        document.getElementById('saveBtn').style.display = 'block';
+      }
 
-      // DB保存フォーム用 hidden フィールドに値をセット
+      // 最新テキスト反映
+      document.getElementById('previewSummary').innerText = summary;
+      document.getElementById('previewTasks').innerHTML = taskHtml;
+
+      // DB保存用 hidden フィールドに値をセット
       document.getElementById('saveMeetingId').value = meetingId;
-      document.getElementById('saveAiSummary').value = mockSummary;
-      document.getElementById('saveTaskTitle').value = mockTask.title;
-      document.getElementById('saveTaskAssignee').value = mockTask.assignee;
-      document.getElementById('saveTaskDueDate').value = mockTask.dueDate;
+      document.getElementById('saveAiSummary').value = summary;
+      document.getElementById('saveTaskTitle').value = taskTitle;
+      document.getElementById('saveTaskAssignee').value = taskAssignee;
+      document.getElementById('saveTaskDueDate').value = taskDueDate;
 
       btn.innerText = '✨ Gemini APIで要約・タスクを抽出する';
       btn.disabled = false;
-    }, 1000);
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      document.getElementById('previewSummary').innerText = '⚠️ 通信処理中にエラーが発生しました。';
+      btn.innerText = '✨ Gemini APIで要約・タスクを抽出する';
+      btn.disabled = false;
+    });
 
     return false;
   }
