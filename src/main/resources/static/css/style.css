@@ -166,6 +166,17 @@ html, body {
     display: none;
 }
 
+/* 標準の右側カレンダーアイコンを隠す設定 */
+.form-input-custom-date::-webkit-calendar-picker-indicator {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
 /* ==========================================================================
    ダッシュボード・グリッドレイアウト
    ========================================================================== */
@@ -245,9 +256,9 @@ html, body {
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
     border-left: 4px solid #0284c7;
-    padding: 14px;
+    padding: 12px 14px;
     border-radius: 0 8px 8px 0;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -269,43 +280,111 @@ html, body {
 .meeting-date {
     font-size: 8.5pt;
     color: #64748b;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
+/* Gemini AI要約ボックス（左上配置＆高さ自動調整） */
 .ai-summary-box {
     background-color: #f0f9ff;
     border: 1px solid #bae6fd;
-    border-radius: 8px;
-    padding: 8px 12px;
+    border-radius: 6px;
+    padding: 6px 10px;
     font-size: 8pt;
     color: #0369a1;
-    line-height: 1.4;
-    white-space: pre-wrap;
+    display: flex;
+    align-items: flex-start; /* ★ 上寄せ配置 */
+    justify-content: flex-start; /* ★ 左寄せ配置 */
+    gap: 6px;
 }
 
-.task-row {
-    border-bottom: 1px solid #f1f5f9;
-    padding: 10px 8px;
+.ai-summary-label {
+    font-weight: bold;
+    white-space: nowrap;
+    color: #0284c7;
+    line-height: 1.4;
+}
+
+.ai-summary-text {
+    color: #334155;
+    line-height: 1.4;
+    white-space: pre-wrap; /* 改行や長いテキストに対応 */
+    word-break: break-all;
+}
+
+/* 未作成枠（左上配置） */
+.ai-summary-box-empty {
+    background-color: #fffbebfb;
+    border: 1px dashed #f59e0b;
+    color: #b45309;
+    padding: 6px 10px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+/* タスク1件分のカード表示（会議カードとデザイン統一） */
+.task-row {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #0284c7; /* 基本の左ライン（TODO用） */
+    padding: 12px 14px;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 10px;
     cursor: pointer;
-    border-radius: 6px;
-    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+/* 進行中タスクのアクセントカラー（オレンジ） */
+.task-row.status-in-progress {
+    border-left-color: #f59e0b;
 }
 
 .task-row:hover {
-    background-color: #f1f5f9;
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+/* 締切バッジ共通スタイル */
 .badge-due {
-    background-color: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 7.5pt;
     font-weight: bold;
+    display: inline-block;
+}
+
+/* 🚨 10日以内：赤色アラート */
+.badge-due-danger {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+/* ⚠️ 11〜30日以内：黄色/オレンジアラート */
+.badge-due-warning {
+    background-color: #fffbebfb;
+    color: #d97706;
+    border: 1px solid #fef3c7;
+}
+
+/* 🟢 31日以上：緑色セーフ */
+.badge-due-safe {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+/* ⚪ 期限なし：マイルドグレー */
+.badge-due-none {
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #cbd5e1;
 }
 
 .badge-status {
@@ -316,6 +395,61 @@ html, body {
     border-radius: 6px;
     font-size: 8pt;
     font-weight: bold;
+}
+
+
+/* ==========================================================================
+   ツールチップ（ヘルプポップアップ）設定
+   ========================================================================== */
+
+.tooltip-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.tooltip-icon {
+    font-size: 8.5pt;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.tooltip-container:hover .tooltip-icon {
+    opacity: 1;
+}
+
+.tooltip-content {
+    visibility: hidden;
+    opacity: 0;
+    width: 240px;
+    background-color: #1e293b;
+    color: #ffffff;
+    text-align: left;
+    border-radius: 8px;
+    padding: 10px 12px;
+    position: absolute;
+    z-index: 100;
+    top: 125%;
+    left: 0;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    pointer-events: none;
+}
+
+.tooltip-content::after {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 8px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent #1e293b transparent;
+}
+
+.tooltip-container:hover .tooltip-content {
+    visibility: visible;
+    opacity: 1;
 }
 
 
@@ -483,7 +617,6 @@ html, body {
     resize: vertical;
 }
 
-/* プレビュー未実行時の空表示用プレースホルダー */
 .sc03-empty-state {
     border: 2px dashed #cbd5e1;
     border-radius: 8px;
@@ -491,4 +624,24 @@ html, body {
     text-align: center;
     color: #94a3b8;
     background-color: #f8fafc;
+}
+
+/* SCR-03 内のタスクカードホバー表示設定 */
+.sc03-task-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+
+.sc03-task-card:hover {
+    background-color: #f8fafc;
+    border-color: #0284c7;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }

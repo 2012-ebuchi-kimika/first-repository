@@ -1,7 +1,11 @@
 package com.example.meeting_app_api.controller;
 
 import com.example.meeting_app_api.entity.Meeting;
+import com.example.meeting_app_api.entity.Task;
+import com.example.meeting_app_api.entity.User;
 import com.example.meeting_app_api.mapper.MeetingMapper;
+import com.example.meeting_app_api.mapper.TaskMapper;
+import com.example.meeting_app_api.mapper.UserMapper;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,45 +14,97 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
 public class MeetingController {
 
     private final MeetingMapper meetingMapper;
+    private final TaskMapper taskMapper;
+    private final UserMapper userMapper;
 
-    // コンストラクタ注入
-    public MeetingController(MeetingMapper meetingMapper) {
+    public MeetingController(MeetingMapper meetingMapper, TaskMapper taskMapper, UserMapper userMapper) {
         this.meetingMapper = meetingMapper;
+        this.taskMapper = taskMapper;
+        this.userMapper = userMapper;
     }
 
-    // 議事録AI生成画面（SCR-03）を表示するハンドラメソッド
+    // 【SCR-03】議事録AI生成画面を表示するハンドラメソッド
     @GetMapping("/meetings/detail")
     public String showMeetingDetail(
             @RequestParam(name = "id", required = false) Long id, 
             Model model) {
         
-        // 画面の会議ドロップダウン選択肢用として会議一覧を取得
+        // 1. 画面の会議ドロップダウン選択肢用として会議一覧を取得
         List<Meeting> meetings = meetingMapper.findAll(null, true);
         model.addAttribute("meetings", meetings);
         
-        // URLパラメータで渡された対象の会議IDを画面へセット
+        // 2. URLパラメータで渡された対象の会議IDを画面へセット
         model.addAttribute("selectedMeetingId", id);
+
+        // 3. モーダル等で使用する全ユーザー情報を取得
+        List<User> users = userMapper.findAll();
+        model.addAttribute("users", users);
+
+        // 4. 対象の会議IDが選択されている場合、保存済みAI要約の取得および既存タスク一覧を取得
+        if (id != null) {
+            // ★ findById メソッドの代わりに取得済みの meetings 一覧から対象の会議を抽出してモデルへセット
+            meetings.stream()
+                    .filter(m -> m.getMeetingId() != null && m.getMeetingId().longValue() == id)
+                    .findFirst()
+                    .ifPresent(m -> model.addAttribute("savedAiSummary", m.getAiSummary()));
+
+            List<Task> existingTasks = taskMapper.findByMeetingId(id);
+
+            // カンマ区切りのメールアドレスにも対応してユーザー名（氏名）に変換
+            for (Task task : existingTasks) {
+                String assigneeEmail = task.getAssigneeEmail();
+                if (assigneeEmail != null && !assigneeEmail.trim().isEmpty()) {
+                    String[] emails = assigneeEmail.split(",");
+                    List<String> names = new ArrayList<>();
+
+                    for (String email : emails) {
+                        String trimmedEmail = email.trim();
+                        if (!trimmedEmail.isEmpty()) {
+                            String name = users.stream()
+                                    .filter(u -> trimmedEmail.equalsIgnoreCase(u.getEmail()))
+                                    .map(User::getName)
+                                    .findFirst()
+                                    .orElse(trimmedEmail); // マッチしない場合は元のメールを表示
+                            names.add(name);
+                        }
+                    }
+                    task.setAssigneeName(String.join(", ", names));
+                } else {
+                    task.setAssigneeName("未割当");
+                }
+            }
+
+            model.addAttribute("existingTasks", existingTasks);
+        }
 
         return "meeting-detail";
     }
 
-    // AI要約・タスクのDB保存処理ハンドラ
+    // AI要約 ＆ 抽出タスクのDB保存処理ハンドラ
     @PostMapping("/meetings/save-summary")
     public String saveSummary(
             @RequestParam("meetingId") Long meetingId,
             @RequestParam("aiSummary") String aiSummary,
-            @RequestParam(name = "extractedTasksJson", required = false) String extractedTasksJson) {
+            @RequestParam(name = "taskTitle", required = false) String taskTitle,
+            @RequestParam(name = "taskAssignee", required = false) String taskAssignee,
+            @RequestParam(name = "taskDueDate", required = false) String taskDueDate) {
 
-        // 会議テーブルの aiSummary を更新
+        // 1. 会議テーブル（meetings）の ai_summary を更新
         meetingMapper.updateAiSummary(meetingId, aiSummary);
 
-        // 保存完了後、該当の会議詳細へリダイレクト
+        // 2. 抽出されたタスクが存在する場合はタスクテーブル（tasks）へ INSERT 登録
+        if (taskTitle != null && !taskTitle.trim().isEmpty()) {
+            taskMapper.insertTask(meetingId, taskTitle, taskAssignee, taskDueDate, "TODO");
+        }
+
+        // 3. 保存完了後、該当の会議詳細へリダイレクト
         return "redirect:/meetings/detail?id=" + meetingId;
     }
 
@@ -67,15 +123,12 @@ public class MeetingController {
             @ModelAttribute Meeting meeting,
             @RequestParam(name = "actionType", defaultValue = "saveOnly") String actionType) {
 
-        // 1. DBに会議を新規登録
+        // DBに会議を新規登録
         meetingMapper.insert(meeting);
 
-        // 2. 押されたボタンに応じて遷移先を制御
         if ("goToDetail".equals(actionType)) {
-            // 「保存して要約作成へ」が押された場合
             return "redirect:/meetings/detail?id=" + meeting.getMeetingId();
         } else {
-            // 「保存する」が押された場合（ダッシュボードに戻る）
             return "redirect:/dashboard";
         }
     }

@@ -19,6 +19,9 @@ public class User {
     // 作成日時
     private LocalDateTime createdAt;
 
+    // 未完了タスク数（画面表示用の保持フィールド）
+    private Integer pendingTaskCount = 0;
+
     // ゲッター・セッター
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
@@ -34,4 +37,7 @@ public class User {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public Integer getPendingTaskCount() { return pendingTaskCount; }
+    public void setPendingTaskCount(Integer pendingTaskCount) { this.pendingTaskCount = pendingTaskCount; }
 }

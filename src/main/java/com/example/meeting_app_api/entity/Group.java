@@ -12,6 +12,9 @@ public class Group {
     
     // 所有者ユーザーID
     private String ownerUserId;
+
+    // 所属メンバー（カンマ区切り文字列）
+    private String members;
     
     // 作成日時
     private LocalDateTime createdAt;
@@ -25,6 +28,9 @@ public class Group {
 
     public String getOwnerUserId() { return ownerUserId; }
     public void setOwnerUserId(String ownerUserId) { this.ownerUserId = ownerUserId; }
+
+    public String getMembers() { return members; }
+    public void setMembers(String members) { this.members = members; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
