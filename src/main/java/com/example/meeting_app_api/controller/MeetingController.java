@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -90,15 +91,31 @@ public class MeetingController {
         return "meeting-detail";
     }
 
-    // ★【新規追加】Gemini APIを非同期で呼び出して解析結果を返す非同期API
+    // 選択された会議IDから開催日を取得してAiServiceへ渡す
     @PostMapping("/meetings/analyze")
     @ResponseBody
     public Map<String, Object> analyzeMeeting(
+            @RequestParam(name = "meetingId", required = false) Long meetingId,
             @RequestParam("transcript") String transcript,
             @RequestParam(name = "personaType", defaultValue = "default") String personaType) {
         
-        // Gemini API呼び出しサービスを実行
-        return aiService.analyzeTranscript(transcript, personaType);
+        // 選択された会議の開催日（YYYY-MM-DD）を取得
+        String meetingDate = LocalDate.now().toString(); // デフォルト（現在日付）
+        if (meetingId != null) {
+            List<Meeting> meetings = meetingMapper.findAll(null, true);
+            Meeting meeting = meetings.stream()
+                    .filter(m -> m.getMeetingId() != null && m.getMeetingId().equals(meetingId))
+                    .findFirst()
+                    .orElse(null);
+
+            if (meeting != null && meeting.getStartTime() != null) {
+                String rawTime = meeting.getStartTime().toString();
+                meetingDate = rawTime.split("T")[0].split(" ")[0];
+            }
+        }
+        
+        // AiService（Gemini API呼び出し）を実行（第3引数に動的開催日を渡す）
+        return aiService.analyzeTranscript(transcript, personaType, meetingDate);
     }
 
     // AI要約 ＆ 抽出タスクのDB保存処理ハンドラ
@@ -113,9 +130,27 @@ public class MeetingController {
         // 1. 会議テーブル（meetings）の ai_summary を更新
         meetingMapper.updateAiSummary(meetingId, aiSummary);
 
-        // 2. 抽出されたタスクが存在する場合はタスクテーブル（tasks）へ INSERT 登録
+        // 2. 抽出された複数タスクをスラッシュ(/)で分割し、1件ずつ分解してDB登録
         if (taskTitle != null && !taskTitle.trim().isEmpty()) {
-            taskMapper.insertTask(meetingId, taskTitle, taskAssignee, taskDueDate, "TODO");
+            String[] titles = taskTitle.split("\\s*/\\s*|\\s*\\\\\\s*");
+            String[] assignees = (taskAssignee != null) ? taskAssignee.split("\\s*/\\s*|\\s*\\\\\\s*") : new String[0];
+            String[] dueDates = (taskDueDate != null) ? taskDueDate.split("\\s*/\\s*|\\s*\\\\\\s*") : new String[0];
+
+            for (int i = 0; i < titles.length; i++) {
+                String content = titles[i].trim();
+                if (content.isEmpty()) continue;
+
+                String assignee = (i < assignees.length) ? assignees[i].trim() : "";
+                String dueDate = (i < dueDates.length) ? dueDates[i].trim() : "";
+
+                // YYYY-MM-DD フォーマットチェック（不正な文字列の場合は空にしてMySQLエラー回避）
+                if (!dueDate.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                    dueDate = null;
+                }
+
+                // 分割した1件ごとのタスクを insert
+                taskMapper.insertTask(meetingId, content, assignee, dueDate, "TODO");
+            }
         }
 
         // 3. 保存完了後、該当の会議詳細へリダイレクト
@@ -136,6 +171,11 @@ public class MeetingController {
     public String createMeeting(
             @ModelAttribute Meeting meeting,
             @RequestParam(name = "actionType", defaultValue = "saveOnly") String actionType) {
+
+        // ★【修正】personaType が null または空文字の場合、初期値 "default" を自動補完する
+        if (meeting.getPersonaType() == null || meeting.getPersonaType().trim().isEmpty()) {
+            meeting.setPersonaType("default");
+        }
 
         meetingMapper.insert(meeting);
 

@@ -7,158 +7,55 @@
 <head>
   <meta charset="UTF-8">
   <title>⚡ AI Smart Meeting System</title>
-  <!-- 共通レイアウトCSSの読み込み -->
   <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=2">
   
-  <!-- 現在時刻（現在日時の比較用）を取得 -->
   <jsp:useBean id="now" class="java.util.Date" />
   <fmt:formatDate value="${now}" pattern="yyyy-MM-dd'T'HH:mm" var="currentFormattedDate" />
-
-  <style>
-    /* ツールチップコンテナ */
-    .tooltip-container {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-        cursor: pointer;
-    }
-
-    /* ヘルプアイコン */
-    .tooltip-icon {
-        font-size: 8.5pt;
-        opacity: 0.7;
-        transition: opacity 0.2s;
-    }
-
-    .tooltip-container:hover .tooltip-icon {
-        opacity: 1;
-    }
-
-    /* ポップアップ吹き出し本体 */
-    .tooltip-content {
-        visibility: hidden;
-        opacity: 0;
-        width: 240px;
-        background-color: #1e293b; /* 落ち着いたダークスレート */
-        color: #ffffff;
-        text-align: left;
-        border-radius: 8px;
-        padding: 10px 12px;
-        position: absolute;
-        z-index: 100;
-        top: 125%; /* アイコンの下側に表示 */
-        left: 0;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        transition: opacity 0.2s ease, visibility 0.2s ease;
-        pointer-events: none;
-    }
-
-    /* 吹き出しの小三角 */
-    .tooltip-content::after {
-        content: "";
-        position: absolute;
-        bottom: 100%;
-        left: 8px;
-        border-width: 6px;
-        border-style: solid;
-        border-color: transparent transparent #1e293b transparent;
-    }
-
-    /* ホバー時に表示 */
-    .tooltip-container:hover .tooltip-content {
-        visibility: visible;
-        opacity: 1;
-    }
-
-    /* 締切バッジ共通スタイル */
-    .badge-due {
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 7.5pt;
-        font-weight: bold;
-        display: inline-block;
-    }
-
-    /* 🚨 10日以内：赤色アラート */
-    .badge-due-danger {
-        background-color: #fef2f2;
-        color: #dc2626;
-        border: 1px solid #fecaca;
-    }
-
-    /* ⚠️ 11〜30日以内：黄色/オレンジアラート */
-    .badge-due-warning {
-        background-color: #fffbebfb;
-        color: #d97706;
-        border: 1px solid #fef3c7;
-    }
-
-    /* 🟢 31日以上：緑色セーフ */
-    .badge-due-safe {
-        background-color: #f0fdf4;
-        color: #166534;
-        border: 1px solid #bbf7d0;
-    }
-
-    /* ⚪ 期限なし：マイルドグレー */
-    .badge-due-none {
-        background-color: #f1f5f9;
-        color: #64748b;
-        border: 1px solid #cbd5e1;
-    }
-  </style>
 </head>
 <body>
 
 <div class="app-container">
-  <div class="navbar">
+  
+  <!-- ヘッダーエリア -->
+  <div class="navbar navbar-slim">
     <div class="brand-logo">⚡ AI Smart Meeting System</div>
     <div>
       trainee1405@company.com <span class="user-badge">管理者</span>
-      <!-- ⚙️ グループ管理ボタン -->
       <button type="button" class="btn-secondary" style="margin-left: 10px; padding: 4px 10px; font-size: 8.5pt;" onclick="openGroupModal()">⚙️ グループ管理</button>
     </div>
   </div>
 
   <div class="main-content">
-    <div class="action-bar">
-      <!-- 新規会議作成ボタン -->
-      <button type="button" class="btn-primary" onclick="openModal()">＋ 新規会議を作成</button>
+    
+    <!-- アクションバー -->
+    <div class="action-bar action-bar-slim">
+      <button type="button" class="btn-primary btn-primary-slim" onclick="openModal()">＋ 新規会議を作成</button>
       
       <div class="search-container">
-        <form action="${pageContext.request.contextPath}/dashboard" method="GET" class="search-box-group" onsubmit="validateForm(event)">
-          <input type="hidden" name="showAll" value="${showAll}">
-          
-          <!-- 入力欄とエラー吹き出し -->
+        <div class="search-box-group">
           <div style="position: relative; display: inline-block;">
-            <input type="text" id="searchInput" name="keyword" class="search-box" 
-                   placeholder="🔍 会議・キーワード検索..." value="<c:out value='${keyword}'/>" oninput="checkInputValidation()">
-            
+            <input type="text" id="searchInput" class="search-box search-box-slim" 
+                   placeholder="🔍 会議・タスク・キーワード検索..." value="<c:out value='${keyword}'/>" oninput="filterDashboardAll()">
             <div id="validationError" class="error-message"></div>
           </div>
 
-          <button type="submit" class="btn-secondary">検索</button>
-          <a href="${pageContext.request.contextPath}/dashboard" class="btn-secondary" style="background-color: #f1f5f9;">クリア</a>
-        </form>
+          <button type="button" class="btn-secondary btn-secondary-slim" onclick="filterDashboardAll()">検索</button>
+          <button type="button" class="btn-secondary btn-clear-slim" onclick="clearDashboardSearch()">クリア</button>
+        </div>
       </div>
     </div>
 
+    <!-- 左右2カラムレイアウト -->
     <div class="layout-grid">
+      
       <!-- 左カラム：会議一覧 -->
       <div class="left-col">
         <div class="card">
-          <div class="card-header">
-            <span>📅 直近の会議とAI要約</span>
-            <c:choose>
-              <c:when test="${showAll}">
-                <a href="${pageContext.request.contextPath}/dashboard?keyword=${keyword}&showAll=false" 
-                   style="font-size: 8.5pt; color: #0284c7; text-decoration: none;">↩️ 直近のみ表示に戻す</a>
-              </c:when>
-              <c:otherwise>
-                <a href="${pageContext.request.contextPath}/dashboard?keyword=${keyword}&showAll=true" 
-                   style="font-size: 8.5pt; color: #64748b; text-decoration: none;">📜 過去の会議もすべて表示</a>
-              </c:otherwise>
-            </c:choose>
+          <div class="card-header card-header-slim">
+            <span>📅 会議一覧とAI要約</span>
+            <select id="monthFilterSelect" class="select-month-filter" onchange="filterDashboardAll()">
+              <option value="">📅 全期間表示</option>
+            </select>
           </div>
           
           <div id="meetingListArea" class="scrollable-area">
@@ -168,22 +65,17 @@
               </c:when>
               <c:otherwise>
                 <c:forEach var="m" items="${meetings}">
-                  <!-- 会議カードクリックで SCR-03 議事録詳細画面へ遷移 -->
-                  <div class="meeting-item" onclick="location.href='${pageContext.request.contextPath}/meetings/detail?id=${m.meetingId}'">
+                  <div class="meeting-item" 
+                       data-start-time="<c:out value='${m.startTime}'/>"
+                       onclick="location.href='${pageContext.request.contextPath}/meetings/detail?id=${m.meetingId}'">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                       <div class="meeting-title"><c:out value="${m.title}"/></div>
-                      
-                      <!-- 未来日時判定バッジ -->
                       <c:choose>
                         <c:when test="${m.startTime > currentFormattedDate}">
-                          <span style="background-color: #fef3c7; color: #d97706; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 12px; font-size: 7.5pt; font-weight: bold;">
-                            📅 予定 (未来)
-                          </span>
+                          <span class="meeting-badge-future">📅 予定 (未来)</span>
                         </c:when>
                         <c:otherwise>
-                          <span style="background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; padding: 2px 8px; border-radius: 12px; font-size: 7.5pt; font-weight: bold;">
-                            ✅ 終了
-                          </span>
+                          <span class="meeting-badge-ended">✅ 終了</span>
                         </c:otherwise>
                       </c:choose>
                     </div>
@@ -192,7 +84,6 @@
                       🕒 <c:out value="${m.startTime}"/> | ペルソナ: <c:out value="${empty m.personaType ? '標準' : m.personaType}"/>
                     </div>
 
-                    <!-- AI要約表示部分 -->
                     <c:choose>
                       <c:when test="${not empty m.aiSummary}">
                         <div class="ai-summary-box">
@@ -215,21 +106,18 @@
         </div>
       </div>
 
-      <!-- 右カラム：未完了タスク -->
+      <!-- 右カラム：タスク一覧 -->
       <div class="right-col">
         <div class="card">
-          <!-- ★ ヘッダー部：未完了タスク ＋ ツールチップ（ℹ️） -->
-          <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <!-- ヘッダー部 -->
+          <div class="card-header card-header-slim">
             <div style="display: flex; align-items: center; gap: 6px;">
-              <span>☑️ 未完了タスク</span>
+              <span id="taskHeaderTitle">☑️ 未完了タスク</span>
               
-              <!-- ツールチップ（ℹ️） -->
               <div class="tooltip-container">
                 <span class="tooltip-icon">ℹ️</span>
                 <div class="tooltip-content">
-                  <div style="font-weight: bold; margin-bottom: 6px; border-bottom: 1px solid #475569; padding-bottom: 4px; color: #f8fafc;">
-                    💡 締切アラートの色ルール
-                  </div>
+                  <div style="font-weight: bold; margin-bottom: 6px; border-bottom: 1px solid #475569; padding-bottom: 4px; color: #f8fafc;">💡 締切アラートの色ルール</div>
                   <div style="display: flex; flex-direction: column; gap: 4px; font-size: 8pt;">
                     <div>🚨 <b style="color: #fca5a5;">危険 (赤色)</b> : 締切まで 10日以内</div>
                     <div>⚠️ <b style="color: #fde047;">注意 (黄色)</b> : 締切まで 11日〜30日以内</div>
@@ -240,27 +128,77 @@
               </div>
             </div>
 
-            <span style="font-size: 8pt; font-weight: normal; color: #64748b;">全 <c:out value="${fn:length(tasks)}"/> 件</span>
+            <span style="font-size: 8pt; font-weight: normal; color: #64748b;" id="taskCountLabel">全 <c:out value="${fn:length(tasks)}"/> 件</span>
           </div>
 
+          <!-- フィルターコントロール -->
+          <div class="task-filter-panel">
+            <div class="filter-grid-row1">
+              <span class="filter-label">絞り込み:</span>
+              
+              <select id="taskStatusFilter" class="task-filter-select" onchange="filterDashboardAll()">
+                <option value="">ステータス (すべて)</option>
+                <option value="TODO">🟣 TODO (未着手)</option>
+                <option value="IN_PROGRESS">🟠 IN_PROGRESS (進行中)</option>
+                <option value="COMPLETED">🟢 COMPLETED (完了)</option>
+              </select>
+
+              <select id="taskAssigneeFilter" class="task-filter-select" onchange="filterDashboardAll()">
+                <option value="">担当者 (すべて)</option>
+              </select>
+
+              <select id="taskUrgencyFilter" class="task-filter-select" onchange="filterDashboardAll()">
+                <option value="">期限 (すべて)</option>
+                <option value="DANGER">🚨 危険 (10日以内)</option>
+                <option value="WARNING">⚠️ 注意 (11-30日)</option>
+                <option value="SAFE">🟢 余裕 (31日以上)</option>
+                <option value="NONE">⚪ 期限なし</option>
+              </select>
+            </div>
+
+            <div class="filter-grid-row2">
+              <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
+                <span class="filter-label">並び替え:</span>
+                <select id="taskSortSelect" class="task-filter-select task-sort-select" onchange="sortAndFilterTasks()">
+                  <option value="dueDate">📅 期限が近い順</option>
+                  <option value="assignee">👤 担当者順</option>
+                  <option value="status">📊 ステータス順</option>
+                </select>
+              </div>
+
+              <label class="completed-toggle">
+                <input type="checkbox" id="showCompletedCheck" onchange="filterDashboardAll()" style="cursor: pointer; accent-color: #0284c7;">
+                <span>完了済みも表示</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- スクロールエリア -->
           <div id="taskListArea" class="scrollable-area">
             <c:choose>
               <c:when test="${empty tasks}">
-                <div style="text-align: center; color: #64748b; padding: 10px;">未完了タスクはありません</div>
+                <div style="text-align: center; color: #64748b; padding: 10px;">タスクはありません</div>
               </c:when>
               <c:otherwise>
                 <c:forEach var="t" items="${tasks}">
-                  <c:if test="${t.status != 'COMPLETED'}">
-                    <div class="task-row ${t.status == 'IN_PROGRESS' ? 'status-in-progress' : ''}" onclick="location.href='${pageContext.request.contextPath}/tasks/detail?id=${t.taskId}'">
-                      <div style="flex: 1; padding-right: 8px;">
-                        <div style="font-size: 7.5pt; color: #0284c7; background-color: #f0f9ff; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 6px; border: 1px solid #bae6fd;">
+                  <div class="task-row task-row-compact ${t.status == 'IN_PROGRESS' ? 'status-in-progress' : ''}" 
+                       data-status="<c:out value='${t.status}'/>"
+                       data-assignee="<c:out value='${empty t.assigneeName ? \"未設定\" : t.assigneeName}'/>"
+                       data-urgency="<c:out value='${empty t.dueUrgency ? \"NONE\" : t.dueUrgency}'/>"
+                       data-due-date="<c:out value='${empty t.dueDate ? \"9999-99-99\" : t.dueDate}'/>"
+                       onclick="window.open('${pageContext.request.contextPath}/tasks/detail?id=${t.taskId}', '_blank')">
+                    
+                    <div style="flex: 1; padding-right: 8px;">
+                      
+                      <!-- 1行目：会議名バッジ ＋ 担当者 ＋ 締切バッジ同列 -->
+                      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap;">
+                        <div class="task-card-meeting-badge">
                           📌 <c:out value="${empty t.meetingTitle ? '未紐付け' : t.meetingTitle}"/>
                         </div>
-                        <div style="font-weight: bold; font-size: 9.5pt; color: #0f172a; margin-bottom: 6px;"><c:out value="${t.taskContent}"/></div>
-                        <div style="font-size: 8pt; color: #64748b;">
-                          担当: <c:out value="${empty t.assigneeName ? '未設定' : t.assigneeName}"/> | 
-                          
-                          <!-- ★ dueUrgency（赤・黄・緑・グレー）の分岐表示 -->
+                        
+                        <div class="task-card-meta">
+                          <span>担当: <c:out value="${empty t.assigneeName ? '未設定' : t.assigneeName}"/></span>
+                          <span style="color: #cbd5e1;">|</span>
                           <c:choose>
                             <c:when test="${t.dueUrgency == 'DANGER'}">
                               <span class="badge-due badge-due-danger">締切: <c:out value="${t.dueDate}"/></span>
@@ -275,12 +213,19 @@
                               <span class="badge-due badge-due-none">締切: 期限なし</span>
                             </c:otherwise>
                           </c:choose>
-
                         </div>
                       </div>
-                      <span class="badge-status"><c:out value="${t.status}"/></span>
+
+                      <!-- 2行目：タスク内容 -->
+                      <div class="task-card-content"><c:out value="${t.taskContent}"/></div>
+                      
                     </div>
-                  </c:if>
+
+                    <!-- 右側：ステータスバッジ -->
+                    <span class="badge-status" style="background: ${t.status == 'COMPLETED' ? '#dcfce7' : ''}; color: ${t.status == 'COMPLETED' ? '#15803d' : ''}; align-self: center;">
+                      <c:out value="${t.status}"/>
+                    </span>
+                  </div>
                 </c:forEach>
               </c:otherwise>
             </c:choose>
@@ -291,7 +236,6 @@
   </div>
 </div>
 
-<!-- モーダルファイルのインクルード -->
 <jsp:include page="modal-create-meeting.jsp" />
 <jsp:include page="modal-group-management.jsp" />
 
@@ -303,27 +247,178 @@
     if (event.target === groupModal && typeof closeGroupModal === 'function') closeGroupModal();
   };
 
-  function checkInputValidation() {
+  function initMonthFilterOptions() {
+    const selectElem = document.getElementById('monthFilterSelect');
+    if (!selectElem) return;
+
+    const monthsSet = new Set();
+    document.querySelectorAll('.meeting-item').forEach(card => {
+      const startTime = card.getAttribute('data-start-time');
+      if (startTime && startTime.length >= 7) {
+        monthsSet.add(startTime.substring(0, 7).replace('-', '/'));
+      }
+    });
+
+    Array.from(monthsSet).sort().reverse().forEach(ym => {
+      const option = document.createElement('option');
+      option.value = ym;
+      option.textContent = ym;
+      selectElem.appendChild(option);
+    });
+  }
+
+  function initAssigneeFilterOptions() {
+    const selectElem = document.getElementById('taskAssigneeFilter');
+    if (!selectElem) return;
+
+    const assigneesSet = new Set();
+    document.querySelectorAll('.task-row').forEach(card => {
+      const assignee = card.getAttribute('data-assignee');
+      if (assignee && assignee !== '未設定') {
+        assigneesSet.add(assignee);
+      }
+    });
+
+    Array.from(assigneesSet).sort().forEach(a => {
+      const option = document.createElement('option');
+      option.value = a;
+      option.textContent = a;
+      selectElem.appendChild(option);
+    });
+  }
+
+  function saveFilterState() {
+    const state = {
+      keyword: document.getElementById('searchInput').value,
+      month: document.getElementById('monthFilterSelect').value,
+      status: document.getElementById('taskStatusFilter').value,
+      assignee: document.getElementById('taskAssigneeFilter').value,
+      urgency: document.getElementById('taskUrgencyFilter').value,
+      sort: document.getElementById('taskSortSelect').value,
+      showCompleted: document.getElementById('showCompletedCheck').checked
+    };
+    sessionStorage.setItem('dashboardFilterState', JSON.stringify(state));
+  }
+
+  function restoreFilterState() {
+    const saved = sessionStorage.getItem('dashboardFilterState');
+    if (!saved) return;
+
+    try {
+      const state = JSON.parse(saved);
+      if (state.keyword !== undefined) document.getElementById('searchInput').value = state.keyword;
+      if (state.month !== undefined) document.getElementById('monthFilterSelect').value = state.month;
+      if (state.status !== undefined) document.getElementById('taskStatusFilter').value = state.status;
+      if (state.assignee !== undefined) document.getElementById('taskAssigneeFilter').value = state.assignee;
+      if (state.urgency !== undefined) document.getElementById('taskUrgencyFilter').value = state.urgency;
+      if (state.sort !== undefined) document.getElementById('taskSortSelect').value = state.sort;
+      if (state.showCompleted !== undefined) document.getElementById('showCompletedCheck').checked = state.showCompleted;
+    } catch (e) {
+      console.error('フィルター状態の復元に失敗しました', e);
+    }
+  }
+
+  function filterDashboardAll() {
     const inputElem = document.getElementById('searchInput');
     const errorElem = document.getElementById('validationError');
-    const value = inputElem.value;
+    const monthSelect = document.getElementById('monthFilterSelect');
+    
+    const query = inputElem ? inputElem.value.toLowerCase().trim() : '';
+    const selectedMonth = monthSelect ? monthSelect.value : '';
 
-    if (value.length > 50) {
+    const statusFilter = document.getElementById('taskStatusFilter').value;
+    const assigneeFilter = document.getElementById('taskAssigneeFilter').value;
+    const urgencyFilter = document.getElementById('taskUrgencyFilter').value;
+    const showCompleted = document.getElementById('showCompletedCheck').checked;
+
+    document.getElementById('taskHeaderTitle').innerText = showCompleted ? '📋 タスク一覧 (全件)' : '☑️ 未完了タスク';
+
+    if (inputElem && inputElem.value.length > 50) {
       inputElem.classList.add('error');
-      errorElem.innerText = '検索ワードは50文字以内で入力してください。（現在: ' + value.length + '文字）';
-      return false;
-    } else {
+      errorElem.innerText = '検索ワードは50文字以内で入力してください。（現在: ' + inputElem.value.length + '文字）';
+      return;
+    } else if (inputElem) {
       inputElem.classList.remove('error');
       errorElem.innerText = '';
-      return true;
     }
+
+    // 1. 会議カード
+    document.querySelectorAll('.meeting-item').forEach(card => {
+      const text = card.innerText.toLowerCase();
+      const startTime = card.getAttribute('data-start-time') || '';
+      const cardYm = startTime.substring(0, 7).replace('-', '/');
+
+      const matchesKeyword = text.includes(query);
+      const matchesMonth = (selectedMonth === '') || (cardYm === selectedMonth);
+
+      card.style.display = (matchesKeyword && matchesMonth) ? 'block' : 'none';
+    });
+
+    // 2. タスクカード
+    let visibleCount = 0;
+    document.querySelectorAll('.task-row').forEach(card => {
+      const text = card.innerText.toLowerCase();
+      const status = card.getAttribute('data-status');
+      const assignee = card.getAttribute('data-assignee');
+      const urgency = card.getAttribute('data-urgency');
+
+      const matchesKeyword = text.includes(query);
+      const matchesStatus = (!statusFilter && (showCompleted || status !== 'COMPLETED')) || (statusFilter && status === statusFilter);
+      const matchesAssignee = (!assigneeFilter) || (assignee.includes(assigneeFilter));
+      const matchesUrgency = (!urgencyFilter) || (urgency === urgencyFilter);
+
+      if (matchesKeyword && matchesStatus && matchesAssignee && matchesUrgency) {
+        card.style.display = 'flex';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    document.getElementById('taskCountLabel').innerText = '表示 ' + visibleCount + ' 件';
+    sortAndFilterTasks();
+    saveFilterState();
   }
 
-  function validateForm(event) {
-    if (!checkInputValidation()) {
-      event.preventDefault();
-    }
+  function sortAndFilterTasks() {
+    const container = document.getElementById('taskListArea');
+    const sortBy = document.getElementById('taskSortSelect').value;
+    const cards = Array.from(container.querySelectorAll('.task-row'));
+
+    cards.sort((a, b) => {
+      if (sortBy === 'dueDate') {
+        return a.getAttribute('data-due-date').localeCompare(b.getAttribute('data-due-date'));
+      } else if (sortBy === 'assignee') {
+        return a.getAttribute('data-assignee').localeCompare(b.getAttribute('data-assignee'), 'ja');
+      } else if (sortBy === 'status') {
+        return a.getAttribute('data-status').localeCompare(b.getAttribute('data-status'));
+      }
+      return 0;
+    });
+
+    cards.forEach(card => container.appendChild(card));
+    saveFilterState();
   }
+
+  function clearDashboardSearch() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('monthFilterSelect').value = '';
+    document.getElementById('taskStatusFilter').value = '';
+    document.getElementById('taskAssigneeFilter').value = '';
+    document.getElementById('taskUrgencyFilter').value = '';
+    document.getElementById('taskSortSelect').value = 'dueDate';
+    document.getElementById('showCompletedCheck').checked = false;
+    
+    sessionStorage.removeItem('dashboardFilterState');
+    filterDashboardAll();
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    initMonthFilterOptions();
+    initAssigneeFilterOptions();
+    restoreFilterState();
+    filterDashboardAll();
+  });
 </script>
 
 </body>

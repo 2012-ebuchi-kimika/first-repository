@@ -3,42 +3,44 @@
 
 <!-- ① 新規会議作成モーダル (SCR-02) -->
 <div id="createMeetingModal" class="modal-overlay">
-  <div class="modal-content" style="max-width: 860px; width: 90%; padding: 20px 24px;">
-    <div class="modal-header" style="margin-bottom: 16px;">
-      <span style="font-size: 13pt; font-weight: bold;">📅 新規会議を作成</span>
+  <div class="modal-content modal-content-large">
+    
+    <!-- ヘッダー -->
+    <div class="modal-header modal-header-large">
+      <span class="modal-title-text">📅 新規会議を作成</span>
       <button type="button" class="modal-close-btn" onclick="closeModal()">&times;</button>
     </div>
     
-    <form action="${pageContext.request.contextPath}/meetings/create" method="POST">
+    <form action="${pageContext.request.contextPath}/meetings/create" method="POST" class="modal-body-form">
       
       <!-- 左右2カラムグリッド -->
-      <div style="display: grid; grid-template-columns: 1fr 1.1fr; gap: 16px; align-items: start;">
+      <div class="modal-body-grid">
         
-        <!-- 左カラム：基本情報 -->
-        <div style="display: flex; flex-direction: column; gap: 8px;">
+        <!-- 【左カラム】：基本情報 -->
+        <div class="modal-column">
           
           <!-- 1. 会議タイトルブロック -->
-          <div class="form-group" style="background-color: #f8fafc; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin: 0;">
-            <label class="form-label" style="font-size: 8.5pt; font-weight: bold; margin-bottom: 4px; display: block;">
+          <div class="form-group modal-form-block">
+            <label class="form-label modal-label-bold">
               会議タイトル <span style="color: #ef4444;">*</span>
             </label>
-            <input type="text" name="title" class="form-input" placeholder="例：週次進捗確認ミーティング" required data-testid="meeting-title-input" style="padding: 6px 10px; background-color: #ffffff;">
+            <input type="text" name="title" id="meetingTitleInput" class="form-input modal-input-full" placeholder="例：週次進捗確認ミーティング" required data-testid="meeting-title-input">
           </div>
           
           <!-- 2. 開催日時ブロック -->
-          <div class="form-group" style="background-color: #f8fafc; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin: 0;">
-            <label class="form-label" style="font-size: 8.5pt; font-weight: bold; margin-bottom: 4px; display: block;">
+          <div class="form-group modal-form-block">
+            <label class="form-label modal-label-bold">
               開催日時 <span style="color: #ef4444;">*</span>
             </label>
-            <input type="datetime-local" name="startTime" class="form-input" required data-testid="meeting-datetime-input" style="padding: 6px 10px; background-color: #ffffff;">
+            <input type="datetime-local" name="startTime" id="meetingStartTimeInput" class="form-input modal-input-full" required data-testid="meeting-datetime-input" style="font-family: inherit;">
           </div>
 
-          <!-- 3. 招待グループ選択ブロック（★DB動的連携へ修正） -->
-          <div class="form-group" style="background-color: #f8fafc; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin: 0;">
-            <label class="form-label" style="font-size: 8.5pt; font-weight: bold; margin-bottom: 4px; display: block;">
-              招待グループ <span style="font-size: 7.5pt; color: #64748b; font-weight: normal;">(任意)</span>
+          <!-- 3. 招待グループ選択ブロック -->
+          <div class="form-group modal-form-block-flex">
+            <label class="form-label modal-label-bold">
+              招待グループ <span style="font-size: 8pt; color: #64748b; font-weight: normal;">(任意)</span>
             </label>
-            <select name="groupId" id="groupSelect" class="form-select" data-testid="group-select-checkbox" onchange="updateGroupMembers()" style="padding: 6px 10px; background-color: #ffffff;">
+            <select name="groupId" id="groupSelect" class="form-select modal-input-full" data-testid="group-select-checkbox" onchange="updateGroupMembers()">
               <option value="" data-members="">グループを選択しない（個人で招待）</option>
               <c:forEach var="g" items="${groups}">
                 <c:if test="${not empty g.groupName}">
@@ -50,41 +52,41 @@
             </select>
             
             <!-- 👥 選択グループのメンバー一覧表示 -->
-            <div id="memberListDisplay" style="margin-top: 6px; font-size: 7.5pt; color: #475569; display: none; background-color: #ffffff; padding: 6px 10px; border-radius: 4px; border: 1px solid #cbd5e1;">
+            <div id="memberListDisplay" class="modal-members-display">
               👥 <b>グループメンバー:</b> <span id="memberNames"></span>
             </div>
           </div>
 
         </div>
 
-        <!-- 右カラム：個別参加メンバー選択 ＋ Google Meet URL自動発行 -->
-        <div style="display: flex; flex-direction: column; gap: 8px;">
+        <!-- 【右カラム】：個別参加メンバー選択 ＋ Google Meet URL自動発行 -->
+        <div class="modal-column-flex">
           
           <!-- 1. 個別参加メンバー追加ブロック -->
-          <div class="form-group" style="background-color: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin: 0;">
-            <label class="form-label" style="margin-bottom: 6px; font-weight: bold; font-size: 8.5pt;">
+          <div class="form-group modal-form-block-flex">
+            <label class="form-label" style="margin-bottom: 8px; font-weight: bold; font-size: 9.5pt; color: #334155;">
               👤 個別参加メンバー追加
             </label>
             
             <!-- リアルタイム検索窓 -->
-            <div style="margin-bottom: 8px;">
-              <input type="text" id="memberSearchInput" class="form-input" placeholder="🔍 名前・メールで絞り込み..." oninput="filterMemberList()" style="padding: 5px 8px; font-size: 8pt; width: 100%; box-sizing: border-box; background-color: #ffffff;">
+            <div style="margin-bottom: 10px;">
+              <input type="text" id="memberSearchInput" class="form-input modal-search-input" placeholder="🔍 名前・メールで絞り込み..." oninput="filterMemberList()">
             </div>
 
-            <!-- DB(usersテーブル)データ動的表示エリア -->
-            <div id="memberListContainer" style="max-height: 110px; overflow-y: auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 6px; display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px;">
+            <!-- メンバーチェックボックスエリア -->
+            <div id="memberListContainer" class="modal-checkbox-list">
               <c:choose>
                 <c:when test="${empty users}">
-                  <div style="font-size: 8pt; color: #64748b; padding: 8px; text-align: center;">登録メンバーがいません</div>
+                  <div style="font-size: 8.5pt; color: #64748b; padding: 12px; text-align: center;">登録メンバーがいません</div>
                 </c:when>
                 <c:otherwise>
                   <c:forEach var="u" items="${users}">
-                    <label class="member-item-label" data-search-text="<c:out value='${u.name}'/> <c:out value='${u.email}'/>" style="font-size: 8pt; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 3px 4px; border-radius: 3px;">
+                    <label class="member-item-label" data-search-text="<c:out value='${u.name}'/> <c:out value='${u.email}'/>" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">
                       <span>
-                        <input type="checkbox" class="member-checkbox" value="<c:out value='${u.email}'/>" onchange="syncSelectedMembers()"> 
+                        <input type="checkbox" class="member-checkbox" value="<c:out value='${u.email}'/>" onchange="syncSelectedMembers()" style="margin-right: 6px;"> 
                         <c:out value="${u.name}"/> (<c:out value="${u.email}"/>)
                       </span>
-                      <span class="group-badge" id="badge-<c:out value='${u.email}'/>" style="font-size: 7pt; color: #ef4444; font-weight: bold; display: none;">（グループ参加済み）</span>
+                      <span class="group-badge" id="badge-<c:out value='${u.email}'/>" style="font-size: 7.5pt; color: #ef4444; font-weight: bold; display: none;">（グループ参加済み）</span>
                     </label>
                   </c:forEach>
                 </c:otherwise>
@@ -92,16 +94,16 @@
             </div>
 
             <!-- 登録予定メンバー一覧 -->
-            <label class="form-label" style="font-size: 7.5pt; color: #475569; margin-bottom: 2px;">参加予定全メンバー一覧 (カンマ区切り):</label>
-            <textarea name="invitedMembers" id="invitedMembersTextarea" class="form-input" style="height: 48px; font-size: 8pt; resize: vertical; background-color: #ffffff;" placeholder="グループメンバーおよび選択した個人が自動入力されます"></textarea>
+            <label class="form-label" style="font-size: 8pt; color: #475569; margin-bottom: 4px; font-weight: bold;">参加予定全メンバー一覧 (カンマ区切り):</label>
+            <textarea name="invitedMembers" id="invitedMembersTextarea" class="form-input modal-textarea-full" placeholder="グループメンバーおよび選択した個人が自動入力されます"></textarea>
           </div>
 
           <!-- 2. Google Meet URL 自動発行ブロック -->
-          <div class="form-group" style="background-color: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; margin: 0;">
-            <button type="button" class="btn-secondary" style="width: 100%; background-color: #0284c7; color: white; border: none; margin-bottom: 6px; padding: 7px 0; font-size: 8.5pt;" data-testid="meet-create-btn" onclick="generateMeetUrl()">
+          <div class="form-group modal-form-block">
+            <button type="button" class="btn-secondary modal-btn-meet" data-testid="meet-create-btn" onclick="generateMeetUrl()">
               Google Meet URL を自動発行して送信
             </button>
-            <div style="font-size: 8pt; color: #475569;">
+            <div style="font-size: 8.5pt; color: #475569;">
               発行結果 Meet URL: 
               <a href="#" id="meetUrlDisplay" target="_blank" style="color: #0284c7; font-weight: bold; text-decoration: underline;">未発行</a>
               <input type="hidden" name="meetUrl" id="meetUrlInput" value="">
@@ -113,10 +115,10 @@
       </div>
       
       <!-- フッターボタンエリア -->
-      <div class="modal-footer" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px;">
-        <button type="button" class="btn-secondary" onclick="closeModal()">キャンセル</button>
-        <button type="submit" name="actionType" value="saveOnly" class="btn-secondary" style="background-color: #e2e8f0; color: #0f172a;">保存</button>
-        <button type="submit" name="actionType" value="goToDetail" class="btn-primary">保存して要約作成へ</button>
+      <div class="modal-footer modal-footer-flex">
+        <button type="button" class="btn-secondary modal-btn-cancel" onclick="closeModal()">キャンセル</button>
+        <button type="submit" name="actionType" value="saveOnly" class="btn-secondary modal-btn-save">保存</button>
+        <button type="submit" name="actionType" value="goToDetail" class="btn-primary modal-btn-primary-action">保存して要約作成へ</button>
       </div>
     </form>
   </div>
@@ -125,7 +127,20 @@
 <script>
   function openModal() {
     const modal = document.getElementById('createMeetingModal');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+      modal.style.display = 'flex';
+      
+      // モーダルを開いた時にチェック状態と出力を初期化リセット
+      document.querySelectorAll('.member-checkbox').forEach(cb => {
+        cb.checked = false;
+        cb.disabled = false;
+      });
+      document.querySelectorAll('.group-badge').forEach(badge => {
+        badge.style.display = 'none';
+      });
+      document.getElementById('groupSelect').value = '';
+      updateGroupMembers();
+    }
   }
 
   function closeModal() {
@@ -133,7 +148,7 @@
     if (modal) modal.style.display = 'none';
   }
 
-  // ★選択されたグループの option から `data-members` を動的に読み取って制御
+  // グループ選択時の連動処理（文字列クレンジング強化版）
   function updateGroupMembers() {
     const selectElem = document.getElementById('groupSelect');
     const selectedOption = selectElem.options[selectElem.selectedIndex];
@@ -141,7 +156,10 @@
     const namesElem = document.getElementById('memberNames');
     
     const membersAttr = selectedOption ? selectedOption.getAttribute('data-members') : '';
-    const groupEmails = membersAttr ? membersAttr.split(',').map(e => e.trim()).filter(e => e !== '') : [];
+    
+    const groupEmails = membersAttr 
+      ? membersAttr.split(',').map(e => e.trim().toLowerCase()).filter(e => e !== '') 
+      : [];
 
     if (groupEmails.length > 0) {
       namesElem.innerText = groupEmails.join(', ');
@@ -150,17 +168,18 @@
       displayArea.style.display = 'none';
     }
 
-    // 個別選択リストの連動（グループに含まれるメールはチェック＆固定表示）
+    // 個別選択リストの自動制御
     document.querySelectorAll('.member-checkbox').forEach(cb => {
-      const email = cb.value;
-      const badge = document.getElementById('badge-' + email);
+      const email = cb.value.trim().toLowerCase();
+      const badge = document.getElementById('badge-' + cb.value);
 
       if (groupEmails.includes(email)) {
         cb.checked = true;
-        cb.disabled = true;
+        cb.disabled = true; // グループメンバーは自動でチェック＆固定
         if (badge) badge.style.display = 'inline';
       } else {
         cb.disabled = false;
+        cb.checked = false; // グループに含まれない場合はチェック解除
         if (badge) badge.style.display = 'none';
       }
     });
@@ -174,9 +193,11 @@
     const membersAttr = selectedOption ? selectedOption.getAttribute('data-members') : '';
     const groupEmails = membersAttr ? membersAttr.split(',').map(e => e.trim()).filter(e => e !== '') : [];
 
+    // 手動でチェックを入れた個別のメンバーを取得
     const checkedBoxes = document.querySelectorAll('.member-checkbox:checked:not(:disabled)');
-    const individualEmails = Array.from(checkedBoxes).map(cb => cb.value);
+    const individualEmails = Array.from(checkedBoxes).map(cb => cb.value.trim());
 
+    // 重複を除外してカンマ区切り出力
     const allEmails = Array.from(new Set([...groupEmails, ...individualEmails]));
     document.getElementById('invitedMembersTextarea').value = allEmails.join(', ');
   }

@@ -19,12 +19,13 @@ public interface TaskMapper {
 
     /**
      * 【SCR-03】議事録投稿 ＆ AI解析画面用
-     * 特定の会議IDに紐付く登録済みタスク一覧を取得
+     * 特定の会議IDに紐付く登録済みタスク一覧を取得（締め切りが近い順）
      *
      * @param meetingId 対象の会議ID
-     * @return 紐付くタスクのリスト（タスクID降順）
+     * @return 紐付くタスクのリスト（締め切り順 ＆ 期限なしは末尾）
      */
-    @Select("SELECT * FROM tasks WHERE meeting_id = #{meetingId} ORDER BY task_id DESC")
+    @Select("SELECT * FROM tasks WHERE meeting_id = #{meetingId} " +
+            "ORDER BY CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date ASC, task_id DESC")
     List<Task> findByMeetingId(@Param("meetingId") Long meetingId);
 
     /**

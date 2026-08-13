@@ -16,7 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
-public class AiService {
+public class GeminiService {
 
     @Value("${gemini.api.key}")
     private String apiKey;
@@ -25,14 +25,14 @@ public class AiService {
     private String apiUrl;
 
     /**
-     * 互換用（基準日省略時は現在日付をセット）
+     * 互換用（基準日省略時）
      */
     public Map<String, Object> analyzeTranscript(String transcript, String personaType) {
         return analyzeTranscript(transcript, personaType, java.time.LocalDate.now().toString());
     }
 
     /**
-     * Gemini APIを呼び出して文字起こしテキストから要約とタスクを抽出する（引数3つ対応版）
+     * Gemini APIを呼び出して文字起こしテキストから要約とタスクを抽出する（動的会議開催日基準）
      */
     public Map<String, Object> analyzeTranscript(String transcript, String personaType, String meetingDate) {
         Map<String, Object> result = new HashMap<>();
@@ -50,7 +50,7 @@ public class AiService {
                 tonePrompt = "標準的なビジネススタイルの丁寧かつ簡潔な口調で出力してください。";
             }
 
-            // 会議開催日(meetingDate)を基準日とした厳格なプロンプト設定
+            // ★ 会議開催日(meetingDate)を基準日とした厳格なプロンプト設定
             String promptText = "以下の「会議の文字起こしテキスト」を分析し、指定されたトーンで要約を作成し、テキスト内に記載されている決定事項やタスク（アクションアイテム）を抽出してください。\\n\\n"
                     + "【要約のトーン】\\n" + tonePrompt + "\\n\\n"
                     + "【会議の文字起こしテキスト】\\n" + escapeJson(transcript) + "\\n\\n"
@@ -73,7 +73,7 @@ public class AiService {
             // JSONリクエストボディ構築
             String jsonInputString = "{\"contents\": [{\"parts\": [{\"text\": \"" + promptText + "\"}]}]}";
 
-            // デバッグ用ログ
+            // ★ デバッグ用ログ：実際のリクエストURLをターミナルに表示
             String finalUrl = apiUrl + "?key=" + apiKey;
             System.out.println("==========================================");
             System.out.println("【Gemini API Request URL】: " + finalUrl);
@@ -110,6 +110,7 @@ public class AiService {
             String responseText = response.toString();
 
             if (responseCode >= 200 && responseCode < 300) {
+                // Java標準の正規表現でJSONレスポンスから各キーの値を抽出
                 result.put("summary", getValueByKey(responseText, "summary"));
                 result.put("taskTitle", getValueByKey(responseText, "taskTitle"));
                 result.put("taskAssignee", getValueByKey(responseText, "taskAssignee"));
@@ -140,6 +141,7 @@ public class AiService {
                     .replace("\n", "\\n");
     }
 
+    // レスポンス文字列から指定されたキーの値を取り出す汎用メソッド
     private String getValueByKey(String jsonResponse, String key) {
         Pattern pattern = Pattern.compile("\\\\?\"" + key + "\\\\?\"\\s*:\\s*\\\\?\"(.*?)\\\\?\"", Pattern.DOTALL);
         Matcher matcher = pattern.matcher(jsonResponse);

@@ -6,60 +6,48 @@
   <meta charset="UTF-8">
   <title>📌 タスクステータス・詳細変更</title>
   <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=2">
-  <style>
-    /* 標準の右側カレンダーアイコンを透過させて左側に重ねる設定 */
-    .form-input-custom-date::-webkit-calendar-picker-indicator {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0;
-        cursor: pointer;
-    }
-  </style>
 </head>
 <body style="background-color: #f8fafc; padding: 24px;">
 
-<div style="max-width: 900px; margin: 0 auto; background: #ffffff; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+<div class="task-detail-container">
   
   <!-- ヘッダー -->
-  <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 20px;">
-    <h2 style="font-size: 13pt; margin: 0; color: #0f172a;">📌 タスクステータス・詳細変更</h2>
-    <span style="font-size: 8.5pt; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">タスクID: <c:out value="${task.taskId}"/></span>
+  <div class="task-detail-header">
+    <h2 class="task-detail-title">📌 タスクステータス・詳細変更</h2>
+    <span class="task-detail-id-badge">タスクID: <c:out value="${task.taskId}"/></span>
   </div>
 
   <form action="${pageContext.request.contextPath}/tasks/update" method="POST" onsubmit="return validateTaskForm(event)">
     <input type="hidden" name="taskId" value="${task.taskId}">
 
     <!-- タスク内容 -->
-    <div class="form-group" style="margin-bottom: 16px;">
-      <label class="form-label" style="font-size: 8.5pt; font-weight: bold; margin-bottom: 6px; display: block;">
+    <div class="form-group task-detail-form-group">
+      <label class="form-label task-detail-label">
         タスク内容 <span style="color: #ef4444;">*</span>
       </label>
-      <input type="text" id="taskContent" name="taskContent" class="form-input" value="<c:out value='${task.taskContent}'/>" style="padding: 8px 12px; font-size: 9pt;" required>
+      <input type="text" id="taskContent" name="taskContent" class="form-input task-detail-input-content" value="<c:out value='${task.taskContent}'/>" required>
     </div>
 
     <!-- 担当者選択エリア（チェックリスト ＋ 検索 ＋ 未完了数バッジ付き） -->
-    <div class="form-group" style="background-color: #f8fafc; padding: 14px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
+    <div class="form-group task-detail-assignee-box">
       <label class="form-label" style="margin-bottom: 6px; font-weight: bold; font-size: 8.5pt;">
         👤 担当者選択
       </label>
       
       <!-- リアルタイム絞り込み検索窓 -->
       <div style="margin-bottom: 8px;">
-        <input type="text" id="assigneeSearchInput" class="form-input" placeholder="🔍 名前・メールで絞り込み..." oninput="filterAssigneeList()" style="padding: 6px 10px; font-size: 8.5pt; width: 100%; box-sizing: border-box; background-color: #ffffff;">
+        <input type="text" id="assigneeSearchInput" class="form-input task-detail-search-input" placeholder="🔍 名前・メールで絞り込み..." oninput="filterAssigneeList()">
       </div>
 
-      <!-- ★ メンバーチェックリスト（max-height を 260px に拡大） -->
-      <div id="assigneeListContainer" style="max-height: 260px; overflow-y: auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;">
+      <!-- メンバーチェックリスト -->
+      <div id="assigneeListContainer" class="task-detail-assignee-list">
         <c:choose>
           <c:when test="${empty users}">
             <div style="font-size: 8pt; color: #64748b; padding: 8px; text-align: center;">登録メンバーがいません</div>
           </c:when>
           <c:otherwise>
             <c:forEach var="u" items="${users}">
-              <label class="assignee-item-label" data-search-text="<c:out value='${u.name}'/> <c:out value='${u.email}'/>" style="font-size: 8.5pt; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-radius: 4px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">
+              <label class="assignee-item-label" data-search-text="<c:out value='${u.name}'/> <c:out value='${u.email}'/>" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">
                 
                 <!-- 左側：チェックボックス ＋ 名前 ＋ メール -->
                 <span style="display: flex; align-items: center; gap: 8px;">
@@ -70,12 +58,12 @@
                 <!-- 右側：未完了タスク件数バッジ -->
                 <c:choose>
                   <c:when test="${u.pendingTaskCount > 0}">
-                    <span style="font-size: 7.5pt; background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 2px 8px; border-radius: 12px; font-weight: bold;">
+                    <span class="task-detail-badge-pending">
                       ⚠️ 未完了タスク: <c:out value="${u.pendingTaskCount}"/>件
                     </span>
                   </c:when>
                   <c:otherwise>
-                    <span style="font-size: 7.5pt; background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 12px; font-weight: bold;">
+                    <span class="task-detail-badge-none">
                       ✨ 未完了なし
                     </span>
                   </c:otherwise>
@@ -88,29 +76,29 @@
       </div>
 
       <!-- 選択結果連携テキストエリア -->
-      <label class="form-label" style="font-size: 7.5pt; color: #475569; margin-bottom: 4px; display: block;">
+      <label class="form-label task-detail-email-label">
         担当者メールアドレス (複数指定する場合はカンマ「,」区切り):
       </label>
-      <input type="text" id="assigneeEmailInput" name="assigneeEmail" class="form-input" value="<c:out value='${task.assigneeEmail}'/>" style="font-size: 8.5pt; background-color: #ffffff; padding: 6px 10px;" placeholder="選択した担当者が自動入力されます">
+      <input type="text" id="assigneeEmailInput" name="assigneeEmail" class="form-input task-detail-email-input" value="<c:out value='${task.assigneeEmail}'/>" placeholder="選択した担当者が自動入力されます">
     </div>
 
     <!-- 履行期限 & 進捗ステータス 2カラム並び -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+    <div class="task-detail-grid-2col">
       
       <!-- 履行期限 -->
       <div class="form-group" style="margin: 0;">
-        <label class="form-label" style="font-size: 8.5pt; font-weight: bold; margin-bottom: 6px; display: block;">履行期限</label>
+        <label class="form-label task-detail-label">履行期限</label>
         
-        <div style="display: flex; align-items: center; justify-content: space-between; background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 10px; height: 38px; box-sizing: border-box;">
+        <div class="task-detail-date-box">
           
           <!-- 左側：カレンダー起動エリア -->
-          <div style="position: relative; display: flex; align-items: center; flex: 1; height: 100%;">
+          <div class="task-detail-date-inner">
             <span style="font-size: 11pt; margin-right: 8px; user-select: none;">📅</span>
-            <input type="date" id="dueDateInput" name="dueDate" class="form-input-custom-date" value="<c:out value='${task.dueDate}'/>" style="border: none; outline: none; background: transparent; padding: 0; font-size: 8.5pt; width: 100%; color: #0f172a; cursor: pointer;">
+            <input type="date" id="dueDateInput" name="dueDate" class="form-input-custom-date task-detail-date-input" value="<c:out value='${task.dueDate}'/>">
           </div>
 
           <!-- 右側：クリアボタン -->
-          <button type="button" onclick="clearDueDate(event)" style="background: none; border: none; color: #94a3b8; font-size: 8pt; cursor: pointer; padding: 2px 6px; border-radius: 4px; white-space: nowrap; font-weight: bold; z-index: 10;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'">
+          <button type="button" class="task-detail-clear-btn" onclick="clearDueDate(event)">
             ✕ クリア
           </button>
 
@@ -119,8 +107,8 @@
 
       <!-- 進捗ステータス -->
       <div class="form-group" style="margin: 0;">
-        <label class="form-label" style="font-size: 8.5pt; font-weight: bold; margin-bottom: 6px; display: block;">進捗ステータス <span style="color: #ef4444;">*</span></label>
-        <select name="status" class="form-select" style="padding: 6px 10px; font-size: 8.5pt;" required>
+        <label class="form-label task-detail-label">進捗ステータス <span style="color: #ef4444;">*</span></label>
+        <select name="status" class="form-select task-detail-select-status" required>
           <option value="TODO" ${task.status == 'TODO' ? 'selected' : ''}>🟣 TODO (未着手)</option>
           <option value="IN_PROGRESS" ${task.status == 'IN_PROGRESS' ? 'selected' : ''}>🟠 IN_PROGRESS (進行中)</option>
           <option value="COMPLETED" ${task.status == 'COMPLETED' ? 'selected' : ''}>🟢 COMPLETED (完了)</option>
@@ -130,34 +118,36 @@
     </div>
 
     <!-- フッターエリア (左側：ナビゲーションボタン群 / 右側：アクションボタン群) -->
-    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+    <div class="task-detail-footer">
       
       <!-- 左下：会議議事録画面・ダッシュボードへの移動ナビゲーション -->
-      <div style="display: flex; gap: 8px; align-items: center;">
+      <div class="task-detail-nav-group">
         <c:choose>
           <c:when test="${not empty task.meetingId}">
-            <a href="${pageContext.request.contextPath}/meetings/detail?id=${task.meetingId}" 
-               class="btn-secondary" style="font-size: 8.5pt; padding: 0 12px; height: 36px; text-decoration: none; color: #0284c7; background-color: #f0f9ff; border: 1px solid #bae6fd; font-weight: bold;">
+            <button type="button" 
+                    class="btn-secondary task-detail-btn-meeting" 
+                    onclick="goToMeetingDetail('${task.meetingId}')">
               📝 対象会議の議事録へ移動
-            </a>
+            </button>
           </c:when>
           <c:otherwise>
-            <span style="font-size: 8pt; color: #94a3b8; background-color: #f1f5f9; padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <span class="task-detail-unlinked-badge">
               📌 会議未紐付けタスク
             </span>
           </c:otherwise>
         </c:choose>
 
-        <a href="${pageContext.request.contextPath}/dashboard" 
-           class="btn-secondary" style="font-size: 8.5pt; padding: 0 12px; height: 36px; text-decoration: none; color: #475569; background-color: #f1f5f9; border: 1px solid #cbd5e1;">
+        <button type="button" 
+                class="btn-secondary task-detail-btn-dashboard" 
+                onclick="goToDashboard()">
           🏠 ダッシュボード
-        </a>
+        </button>
       </div>
 
       <!-- 右下：アクションボタン -->
-      <div style="display: flex; gap: 10px;">
+      <div class="task-detail-action-group">
         <button type="button" class="btn-secondary" onclick="history.back()">キャンセル</button>
-        <button type="submit" class="btn-primary" style="background-color: #0284c7; font-size: 9pt;">💾 変更を更新する</button>
+        <button type="submit" class="btn-primary task-detail-btn-update">💾 変更を更新する</button>
       </div>
 
     </div>
@@ -217,6 +207,45 @@
       return false;
     }
     return true;
+  }
+
+  // 対象会議の議事録へ移動する高度なナビゲーション処理
+  function goToMeetingDetail(meetingId) {
+    if (!meetingId) {
+      alert("対象の会議IDが取得できませんでした。");
+      return;
+    }
+
+    const meetingUrl = '${pageContext.request.contextPath}/meetings/detail?id=' + meetingId;
+
+    if (window.opener && !window.opener.closed) {
+      try {
+        window.opener.location.href = meetingUrl;
+        window.opener.focus();
+        window.close();
+      } catch (e) {
+        window.location.href = meetingUrl;
+      }
+    } else {
+      window.location.href = meetingUrl;
+    }
+  }
+
+  // ダッシュボードへ戻る処理（親タブへ戻って自タブを閉じる）
+  function goToDashboard() {
+    const dashboardUrl = '${pageContext.request.contextPath}/dashboard';
+
+    if (window.opener && !window.opener.closed) {
+      try {
+        window.opener.location.href = dashboardUrl;
+        window.opener.focus();
+        window.close();
+      } catch (e) {
+        window.location.href = dashboardUrl;
+      }
+    } else {
+      window.location.href = dashboardUrl;
+    }
   }
 </script>
 

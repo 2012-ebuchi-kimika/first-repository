@@ -1,8 +1,8 @@
 /* ==========================================================================
-   全体基本設定（画面全体スクロールの抑制）
+   1. 全体基本設定（アプリケーション全体のベース構造）
    ========================================================================== */
 
-/* 画面全体のルート設定（ブラウザのスクロールバーを完全に無効化） */
+/* 画面全体のスクロールを抑え、ビューポート高さ(100vh)いっぱいに表示するベース設定 */
 html, body {
     margin: 0;
     padding: 0;
@@ -14,7 +14,7 @@ html, body {
     box-sizing: border-box;
 }
 
-/* 全体コンテナ */
+/* ダッシュボード（dashboard.jsp）等で画面中央に配置されるメインの白い枠線コンテナ */
 .app-container {
     width: calc(100% - 40px);
     max-width: 1400px;
@@ -31,9 +31,10 @@ html, body {
 
 
 /* ==========================================================================
-   ヘッダー・ナビゲーションエリア
+   2. ヘッダー・ナビゲーションエリア（全画面共通の最上部バー）
    ========================================================================== */
 
+/* 上部ナビゲーションバー（システム名、ユーザー情報、グループ管理ボタン等の横並び枠） */
 .navbar {
     background-color: #ffffff;
     padding: 14px 24px;
@@ -43,12 +44,14 @@ html, body {
     align-items: center;
 }
 
+/* 「⚡ AI Smart Meeting System」のブランドロゴテキスト */
 .brand-logo {
     font-size: 16pt;
     font-weight: bold;
     color: #0284c7;
 }
 
+/* ヘッダー右側のユーザー権限「管理者」バッジ */
 .user-badge {
     background-color: #e0f2fe;
     color: #0369a1;
@@ -60,9 +63,10 @@ html, body {
 
 
 /* ==========================================================================
-   メインコンテンツ・操作バー
+   3. メインコンテンツ・操作バー（ダッシュボード上部のボタン・検索エリア）
    ========================================================================== */
 
+/* アクションバーやカードをまとめる灰色背景のメインコンテンツ領域 */
 .main-content {
     padding: 12px 20px;
     background-color: #f8fafc;
@@ -72,6 +76,7 @@ html, body {
     overflow: hidden;
 }
 
+/* 「＋新規会議を作成」ボタンと右側の「検索バー」を配置する1行目のエリア */
 .action-bar {
     display: flex;
     justify-content: space-between;
@@ -80,6 +85,7 @@ html, body {
     padding-bottom: 0 !important;
 }
 
+/* 「＋新規会議を作成」などの標準プライマリボタン（青色） */
 .btn-primary {
     background-color: #0284c7;
     color: #ffffff;
@@ -97,12 +103,14 @@ html, body {
     border: none;
 }
 
+/* 検索ボックスと検索・クリアボタンをまとめる右寄せコンテナ */
 .search-container {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
 }
 
+/* 検索インプットとボタンを並べる横並びグループ */
 .search-box-group {
     display: flex;
     gap: 8px;
@@ -110,6 +118,7 @@ html, body {
     position: relative;
 }
 
+/* 🔍 リアルタイム検索テキストボックス */
 .search-box {
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
@@ -122,11 +131,13 @@ html, body {
     outline: none;
 }
 
+/* 検索文字数が50文字を超えた際のエラー状態ハイライト */
 .search-box.error {
     border-color: #ef4444;
     background-color: #fef2f2;
 }
 
+/* 検索・クリア・戻るなどのセカンダリボタン（グレー色） */
 .btn-secondary {
     background-color: #e2e8f0;
     color: #334155;
@@ -144,14 +155,14 @@ html, body {
     box-sizing: border-box;
 }
 
-/* 検索入力欄の直下に浮かび上がる吹き出し */
+/* 検索エラー時の赤文字ポップアップ（50文字制限用） */
 .error-message {
     color: #dc2626;
     font-size: 8pt;
     font-weight: bold;
     position: absolute;
-    top: 44px; /* 検索ボックス（高さ40px）のすぐ真下に配置 */
-    left: 0;   /* 入力欄の左端に合わせる */
+    top: 44px;
+    left: 0;
     background-color: #fef2f2;
     border: 1px solid #fca5a5;
     padding: 4px 8px;
@@ -161,12 +172,11 @@ html, body {
     white-space: nowrap;
 }
 
-/* メッセージが空の時は枠線や背景を消す */
 .error-message:empty {
     display: none;
 }
 
-/* 標準の右側カレンダーアイコンを隠す設定 */
+/* HTML5 date インプットのカレンダー指示アイコン背景調整 */
 .form-input-custom-date::-webkit-calendar-picker-indicator {
     position: absolute;
     left: 0;
@@ -177,10 +187,12 @@ html, body {
     cursor: pointer;
 }
 
+
 /* ==========================================================================
-   ダッシュボード・グリッドレイアウト
+   4. ダッシュボード・グリッドレイアウト（左：会議一覧 6 / 右：未完了タスク 4）
    ========================================================================== */
 
+/* 左右2カラム（会議一覧とタスク一覧）を並べるグリッドコンテナ */
 .layout-grid {
     display: flex;
     gap: 16px;
@@ -189,18 +201,21 @@ html, body {
     overflow: hidden;
 }
 
+/* 左カラム（会議一覧エリア：幅 6 割合） */
 .left-col {
     flex: 6;
     display: flex;
     flex-direction: column;
 }
 
+/* 右カラム（タスク一覧エリア：幅 4 割合） */
 .right-col {
     flex: 4;
     display: flex;
     flex-direction: column;
 }
 
+/* 各カラム内の白いカードベース枠 */
 .card {
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
@@ -212,6 +227,7 @@ html, body {
     flex-direction: column;
 }
 
+/* 「📅 会議一覧とAI要約」などのカード見出しヘッダー */
 .card-header {
     font-size: 11pt;
     font-weight: bold;
@@ -225,33 +241,38 @@ html, body {
 
 
 /* ==========================================================================
-   カード内可変スクロール領域＆カスタムスクロールバー
+   5. カード内可変スクロール領域＆カスタムスクロールバー（カード内縦スクロール）
    ========================================================================== */
 
+/* 会議カード・タスクカードが溢れたときに縦スクロールさせる領域 */
 .scrollable-area {
     flex: 1;
     overflow-y: auto;
     padding-right: 6px;
 }
 
+/* スクロールバー全体の幅 */
 .scrollable-area::-webkit-scrollbar {
     width: 6px;
 }
 
+/* スクロールバーのつまみ（グレーの丸文字バー） */
 .scrollable-area::-webkit-scrollbar-thumb {
     background-color: #cbd5e1;
     border-radius: 4px;
 }
 
+/* スクロールバーの背景レール */
 .scrollable-area::-webkit-scrollbar-track {
     background-color: #f1f5f9;
 }
 
 
 /* ==========================================================================
-   コンテンツ要素（会議アイテム・タスク行・バッジ）
+   6. コンテンツ要素（会議アイテム・タスク行・バッジ類）
    ========================================================================== */
 
+/* ダッシュボード左側の「会議一覧」カード 1件ごとの枠 */
 .meeting-item {
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
@@ -271,19 +292,21 @@ html, body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+/* 会議カード内のタイトルテキスト */
 .meeting-title {
     font-size: 10.5pt;
     font-weight: bold;
     margin-bottom: 4px;
 }
 
+/* 会議カード内の開催日時テキスト */
 .meeting-date {
     font-size: 8.5pt;
     color: #64748b;
     margin-bottom: 8px;
 }
 
-/* Gemini AI要約ボックス（左上配置＆高さ自動調整） */
+/* 会議カード内の「✨ Gemini AI要約」表示テキストボックス */
 .ai-summary-box {
     background-color: #f0f9ff;
     border: 1px solid #bae6fd;
@@ -292,11 +315,12 @@ html, body {
     font-size: 8pt;
     color: #0369a1;
     display: flex;
-    align-items: flex-start; /* ★ 上寄せ配置 */
-    justify-content: flex-start; /* ★ 左寄せ配置 */
+    align-items: flex-start;
+    justify-content: flex-start;
     gap: 6px;
 }
 
+/* 「✨ Gemini AI要約:」の太字ラベル */
 .ai-summary-label {
     font-weight: bold;
     white-space: nowrap;
@@ -304,14 +328,15 @@ html, body {
     line-height: 1.4;
 }
 
+/* 要約テキスト本体 */
 .ai-summary-text {
     color: #334155;
     line-height: 1.4;
-    white-space: pre-wrap; /* 改行や長いテキストに対応 */
+    white-space: pre-wrap;
     word-break: break-all;
 }
 
-/* 未作成枠（左上配置） */
+/* 要約が未作成の会議カードに表示される黄色警告ボックス */
 .ai-summary-box-empty {
     background-color: #fffbebfb;
     border: 1px dashed #f59e0b;
@@ -322,11 +347,11 @@ html, body {
     gap: 6px;
 }
 
-/* タスク1件分のカード表示（会議カードとデザイン統一） */
+/* ダッシュボード右側の「未完了タスク」カード 1件ごとの枠 */
 .task-row {
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
-    border-left: 4px solid #0284c7; /* 基本の左ライン（TODO用） */
+    border-left: 4px solid #0284c7;
     padding: 12px 14px;
     border-radius: 0 8px 8px 0;
     margin-bottom: 10px;
@@ -338,7 +363,7 @@ html, body {
     box-sizing: border-box;
 }
 
-/* 進行中タスクのアクセントカラー（オレンジ） */
+/* ステータスが IN_PROGRESS (進行中) のタスクカード（左線をオレンジ色にする） */
 .task-row.status-in-progress {
     border-left-color: #f59e0b;
 }
@@ -350,7 +375,7 @@ html, body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* 締切バッジ共通スタイル */
+/* 締切期限バッジの共通パーツ */
 .badge-due {
     padding: 2px 6px;
     border-radius: 4px;
@@ -359,34 +384,35 @@ html, body {
     display: inline-block;
 }
 
-/* 🚨 10日以内：赤色アラート */
+/* 🚨 締切10日以内（赤色危険バッジ） */
 .badge-due-danger {
     background-color: #fef2f2;
     color: #dc2626;
     border: 1px solid #fecaca;
 }
 
-/* ⚠️ 11〜30日以内：黄色/オレンジアラート */
+/* ⚠️ 締切11〜30日以内（黄色注意バッジ） */
 .badge-due-warning {
     background-color: #fffbebfb;
     color: #d97706;
     border: 1px solid #fef3c7;
 }
 
-/* 🟢 31日以上：緑色セーフ */
+/* 🟢 締切31日以上先（緑色余裕バッジ） */
 .badge-due-safe {
     background-color: #f0fdf4;
     color: #166534;
     border: 1px solid #bbf7d0;
 }
 
-/* ⚪ 期限なし：マイルドグレー */
+/* ⚪ 締切未設定（グレーバッジ） */
 .badge-due-none {
     background-color: #f1f5f9;
     color: #64748b;
     border: 1px solid #cbd5e1;
 }
 
+/* タスクカード右側のステータス表示バッジ（TODO / IN_PROGRESS / COMPLETED） */
 .badge-status {
     background-color: #ecfdf5;
     color: #059669;
@@ -399,9 +425,10 @@ html, body {
 
 
 /* ==========================================================================
-   ツールチップ（ヘルプポップアップ）設定
+   7. ツールチップ（「ℹ️」アイコンのポップアップ説明吹き出し）
    ========================================================================== */
 
+/* ツールチップ要素全体を囲むコンテナ */
 .tooltip-container {
     position: relative;
     display: inline-flex;
@@ -409,6 +436,7 @@ html, body {
     cursor: pointer;
 }
 
+/* ℹ️ アイコンマーク */
 .tooltip-icon {
     font-size: 8.5pt;
     opacity: 0.7;
@@ -419,6 +447,7 @@ html, body {
     opacity: 1;
 }
 
+/* ホバー時に表示される黒い説明吹き出し本体 */
 .tooltip-content {
     visibility: hidden;
     opacity: 0;
@@ -437,6 +466,7 @@ html, body {
     pointer-events: none;
 }
 
+/* 吹き出し上部の小さな三角矢印 */
 .tooltip-content::after {
     content: "";
     position: absolute;
@@ -454,9 +484,10 @@ html, body {
 
 
 /* ==========================================================================
-   新規作成モーダル（サブ画面ポップアップ）
+   8. モーダルベース設定（モーダル背景＆フォーム共通パーツ）
    ========================================================================== */
 
+/* モーダル表示時の画面全体を覆う半透明暗め背景 */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -471,6 +502,7 @@ html, body {
     align-items: center;
 }
 
+/* ポップアップ表示される中央の白いダイアログボックス */
 .modal-content {
     background-color: #ffffff;
     width: 500px;
@@ -482,6 +514,7 @@ html, body {
     box-sizing: border-box;
 }
 
+/* モーダル上部のタイトル＆閉じるボタンエリア */
 .modal-header {
     display: flex;
     justify-content: space-between;
@@ -494,6 +527,7 @@ html, body {
     color: #0f172a;
 }
 
+/* モーダル右上の「×」閉じるボタン */
 .modal-close-btn {
     background: none;
     border: none;
@@ -507,11 +541,13 @@ html, body {
     color: #0f172a;
 }
 
+/* モーダル内フォームの項目ブロック */
 .form-group {
     margin-bottom: 16px;
     text-align: left;
 }
 
+/* フォーム項目の見出しラベル */
 .form-label {
     display: block;
     font-size: 9pt;
@@ -520,6 +556,7 @@ html, body {
     margin-bottom: 6px;
 }
 
+/* 入力テキストボックス・ドロップダウンの共通スタイル */
 .form-input, .form-select {
     width: 100%;
     height: 40px;
@@ -536,6 +573,7 @@ html, body {
     box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
 }
 
+/* モーダル下部の「保存」「キャンセル」ボタン配置フッター */
 .modal-footer {
     display: flex;
     justify-content: flex-end;
@@ -547,20 +585,504 @@ html, body {
 
 
 /* ==========================================================================
-   議事録投稿＆AI解析画面（SCR-03）用スタイル
+   9. 新規会議作成モーダル (modal-create-meeting.jsp) 専用機能クラス
    ========================================================================== */
 
-.sc03-wrapper {
-    max-width: 1400px;
-    margin: 20px auto;
-    padding: 0 24px;
+/* 新規会議作成モーダルの大型枠 (幅1100px) */
+.modal-content-large {
+    max-width: 1100px !important;
+    width: 95% !important;
+    max-height: 88vh !important;
+    padding: 24px 28px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
 }
 
+.modal-header-large {
+    margin-bottom: 18px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+}
+
+.modal-title-text {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #0f172a;
+}
+
+.modal-body-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+/* モーダル内部の左右2カラム構造 */
+.modal-body-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 24px;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
+}
+
+.modal-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modal-column-flex {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+}
+
+/* モーダル内の入力セクションブロック（薄い背景の枠） */
+.modal-form-block {
+    background-color: #f8fafc;
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin: 0;
+}
+
+.modal-form-block-flex {
+    background-color: #f8fafc;
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.modal-label-bold {
+    font-size: 9.5pt;
+    font-weight: bold;
+    margin-bottom: 6px;
+    display: block;
+    color: #334155;
+}
+
+.modal-input-full {
+    padding: 8px 12px;
+    font-size: 9.5pt;
+    background-color: #ffffff;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 6px;
+}
+
+/* グループ選択時にメンバー名を表示する領域 */
+.modal-members-display {
+    margin-top: 10px;
+    font-size: 8.5pt;
+    color: #475569;
+    display: none;
+    background-color: #ffffff;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    line-height: 1.5;
+    word-break: break-all;
+}
+
+.modal-search-input {
+    padding: 6px 10px;
+    font-size: 8.5pt;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    border-radius: 6px;
+}
+
+/* 参加メンバーの選択チェックボックスリスト */
+.modal-checkbox-list {
+    max-height: 180px;
+    overflow-y: auto;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+    flex: 1;
+    min-height: 0;
+}
+
+.member-item-label {
+    font-size: 8.5pt;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: background 0.15s ease;
+}
+
+.modal-textarea-full {
+    height: 54px;
+    font-size: 8.5pt;
+    resize: vertical;
+    background-color: #ffffff;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 6px;
+}
+
+/* 「Google Meet URL を自動発行」ボタン */
+.modal-btn-meet {
+    width: 100%;
+    background-color: #0284c7;
+    color: white;
+    border: none;
+    margin-bottom: 8px;
+    padding: 9px 0;
+    font-size: 9pt;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.modal-footer-flex {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.modal-btn-cancel {
+    padding: 8px 16px;
+    font-size: 9pt;
+}
+
+.modal-btn-save {
+    background-color: #e2e8f0;
+    color: #0f172a;
+    padding: 8px 18px;
+    font-size: 9pt;
+}
+
+.modal-btn-primary-action {
+    padding: 8px 20px;
+    font-size: 9pt;
+}
+
+
+/* ==========================================================================
+   10. 招待グループ管理モーダル (modal-group-management.jsp) 専用クラス
+   ========================================================================== */
+
+/* グループ管理モーダルの大型枠 (幅1400px, 高さ92vh) */
+.group-modal-content {
+    max-width: 1400px !important;
+    width: 96% !important;
+    height: 92vh !important;
+    padding: 28px 32px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+}
+
+.group-modal-header {
+    margin-bottom: 20px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+}
+
+.group-modal-title {
+    font-size: 16pt;
+    font-weight: bold;
+    color: #0f172a;
+}
+
+.group-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+/* 3カラム（左:グループ一覧 / 中:入力ガイド / 右:メンバー選択）構造 */
+.group-grid-3col {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr 1.2fr;
+    gap: 24px;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
+}
+
+.group-col-box {
+    background-color: #f8fafc;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.group-col-center {
+    background-color: #f8fafc;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1;
+}
+
+.group-col-title {
+    font-size: 10.5pt;
+    font-weight: bold;
+    margin-bottom: 12px;
+    display: block;
+    color: #334155;
+}
+
+.group-registered-list {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+    padding-right: 4px;
+}
+
+.group-empty-msg {
+    font-size: 9.5pt;
+    color: #64748b;
+    padding: 20px;
+    text-align: center;
+}
+
+/* 登録済みグループの1件ごとの表示カード */
+.group-card-item {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.group-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.group-card-title {
+    font-size: 10pt;
+    color: #0f172a;
+}
+
+.group-action-btns {
+    display: flex;
+    gap: 10px;
+}
+
+/* 「[編集]」リンクボタン */
+.group-btn-edit {
+    color: #0284c7;
+    background: none;
+    border: none;
+    font-size: 8.5pt;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 0;
+}
+
+/* 「[削除]」リンクボタン */
+.group-btn-delete {
+    color: #ef4444;
+    background: none;
+    border: none;
+    font-size: 8.5pt;
+    cursor: pointer;
+    padding: 0;
+}
+
+.group-members-text {
+    font-size: 8.5pt;
+    color: #64748b;
+    line-height: 1.5;
+    word-break: break-all;
+}
+
+.group-center-header {
+    margin-bottom: 18px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 12px;
+}
+
+.group-center-header-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.group-mode-title {
+    font-size: 10.5pt;
+    font-weight: bold;
+    color: #0f172a;
+}
+
+.group-target-badge {
+    display: none;
+    font-size: 8.5pt;
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.group-reset-btn {
+    font-size: 8.5pt;
+    color: #0284c7;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.group-input-full {
+    padding: 10px 14px;
+    font-size: 10pt;
+    background-color: #ffffff;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 6px;
+}
+
+.group-guide-box {
+    font-size: 8.5pt;
+    color: #475569;
+    line-height: 1.6;
+    background: #ffffff;
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+}
+
+.group-member-search {
+    padding: 8px 12px;
+    font-size: 9pt;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    border-radius: 6px;
+}
+
+.group-member-checkbox-list {
+    overflow-y: auto;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+    flex: 1;
+    min-height: 0;
+}
+
+.group-member-item-label {
+    font-size: 9pt;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-radius: 4px;
+    transition: background 0.15s ease;
+}
+
+.group-textarea-full {
+    height: 65px;
+    font-size: 9pt;
+    resize: vertical;
+    background-color: #ffffff;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 6px;
+}
+
+.group-footer-flex {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.group-btn-close {
+    padding: 10px 22px;
+    font-size: 9.5pt;
+}
+
+.group-btn-submit {
+    background-color: #0284c7;
+    font-size: 9.5pt;
+    padding: 10px 28px;
+}
+
+
+/* ==========================================================================
+   11. 議事録投稿＆AI解析画面 (meeting-detail.jsp) 専用クラス
+   ========================================================================== */
+
+/* 画面全体のフルサイズラッパー */
+.sc03-wrapper {
+    max-width: 1400px;
+    height: calc(100vh - 70px);
+    margin: 10px auto;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+/* 左：文字起こし入力 / 右：AI解析結果・既存タスク の50%:50%グリッド */
 .sc03-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    align-items: stretch !important;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+    align-items: stretch;
 }
 
 @media (max-width: 1024px) {
@@ -571,18 +1093,41 @@ html, body {
 
 .sc03-card {
     background: #ffffff;
-    border-radius: 12px;
-    padding: 28px;
+    border-radius: 10px;
+    padding: 16px;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
     display: flex;
     flex-direction: column;
     height: 100%;
     box-sizing: border-box;
 }
 
+.sc03-card-title {
+    font-size: 11.5pt;
+    margin: 0 0 10px 0;
+    color: #0f172a;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 6px;
+}
+
+.sc03-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
 .sc03-form-group {
-    margin-bottom: 18px;
+    margin-bottom: 8px;
+}
+
+.sc03-form-group-flex {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 8px;
+    flex: 1;
+    min-height: 0;
 }
 
 .sc03-label {
@@ -590,7 +1135,7 @@ html, body {
     font-size: 9pt;
     font-weight: bold;
     color: #334155;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .sc03-input, .sc03-select, .sc03-textarea {
@@ -611,37 +1156,652 @@ html, body {
     box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
 }
 
+/* 文字起こしテキスト入力用の縦いっぱいテキストエリア */
 .sc03-textarea {
-    height: 280px;
+    flex: 1;
+    height: 100%;
+    resize: none;
     line-height: 1.6;
-    resize: vertical;
 }
 
+/* 「✨ Gemini APIで要約・タスクを抽出する」ボタン */
+.sc03-btn-ai {
+    width: 100%;
+    padding: 10px;
+    font-size: 9pt;
+    background-color: #0284c7;
+}
+
+.sc03-right-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+}
+
+.sc03-ai-box {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+/* AI要約が未生成の場合の「🤖」初期案内ボックス */
 .sc03-empty-state {
-    border: 2px dashed #cbd5e1;
-    border-radius: 8px;
-    padding: 16px;
+    flex: 1;
+    padding: 16px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 6px;
     text-align: center;
-    color: #94a3b8;
-    background-color: #f8fafc;
 }
 
-/* SCR-03 内のタスクカードホバー表示設定 */
-.sc03-task-card {
+.sc03-result-area {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-height: 0;
+}
+
+/* 生成されたAI要約（水色背景）カード */
+.sc03-summary-card {
+    background-color: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 6px;
+    padding: 8px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.sc03-summary-label {
+    font-size: 8.5pt;
+    font-weight: bold;
+    color: #0369a1;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.sc03-summary-textarea {
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #bae6fd;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 8.5pt;
+    line-height: 1.5;
+    color: #1e293b;
+    flex: 1;
+    resize: none;
+    box-sizing: border-box;
+    font-family: inherit;
+    min-height: 0;
+}
+
+/* AIが自動抽出したタスクの編集用緑色カード */
+.sc03-tasks-container {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 6px;
+    padding: 8px;
+    display: none;
+}
+
+.sc03-tasks-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 14px;
-    background-color: #ffffff;
+    margin-bottom: 6px;
+}
+
+/* 「＋ タスク追加」緑色ボタン */
+.sc03-btn-add-task {
+    background-color: #16a34a;
+    color: white;
+    border: none;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 7.5pt;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.sc03-tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 100px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+/* 「💾 この要約と新タスクをDBに保存する」ボタン */
+.sc03-btn-save {
+    width: 100%;
+    background-color: #16a34a;
+    border: none;
+    padding: 8px;
+    font-size: 8.5pt;
+    display: none;
+}
+
+/* 右下：この会議に紐づく「登録済みタスク」の一覧ボックス */
+.sc03-registered-tasks-box {
+    background: #fafafa;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.sc03-registered-tasks-header {
+    font-size: 8.5pt;
+    font-weight: bold;
+    color: #475569;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sc03-registered-tasks-count {
+    font-size: 7.5pt;
+    background: #e2e8f0;
+    color: #334155;
+    padding: 1px 6px;
+    border-radius: 10px;
+}
+
+.sc03-registered-tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    padding-right: 2px;
+    flex: 1;
+    min-height: 0;
+}
+
+.sc03-task-item {
+    background: #ffffff;
     border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    margin-bottom: 8px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 8pt;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.sc03-task-card:hover {
+.sc03-task-item:hover {
     background-color: #f8fafc;
     border-color: #0284c7;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.sc03-nav-back {
+    margin-bottom: 6px;
+}
+
+.sc03-nav-back-link {
+    text-decoration: none;
+    color: #0284c7;
+    font-size: 8.5pt;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+
+/* ==========================================================================
+   12. ダッシュボード画面 (dashboard.jsp) スリム化＆フィルター用クラス
+   ========================================================================== */
+
+/* 上部ナビバーのパディングを詰めて高さをコンパクト化 */
+.navbar-slim {
+    padding: 10px 20px !important;
+}
+
+/* アクションバーの下マージン調整 */
+.action-bar-slim {
+    margin-bottom: 12px !important;
+}
+
+.btn-primary-slim {
+    padding: 6px 14px !important;
+    font-size: 8.5pt !important;
+}
+
+.search-box-slim {
+    padding: 5px 10px !important;
+    font-size: 8.5pt !important;
+}
+
+.btn-secondary-slim {
+    padding: 5px 10px !important;
+    font-size: 8.5pt !important;
+}
+
+.btn-clear-slim {
+    padding: 5px 10px !important;
+    font-size: 8.5pt !important;
+    background-color: #f1f5f9 !important;
+}
+
+.card-header-slim {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* 左カラム：表示期間「📅 年月選択」プルダウン */
+.select-month-filter {
+    font-size: 8.5pt;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #0f172a;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* 右カラム：タスクの絞り込み・ソート用灰色背景パネル */
+.task-filter-panel {
+    background-color: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-sizing: border-box;
+}
+
+/* 絞り込み1行目：ラベル ＋ ステータス ＋ 担当者 ＋ 期限 の均等グリッド配置 */
+.filter-grid-row1 {
+    display: grid;
+    grid-template-columns: 52px 1fr 1fr 1fr;
+    gap: 6px;
+    align-items: center;
+}
+
+/* 絞り込み2行目：並び替えプルダウン ＋ 完了済み表示チェック の左右配置 */
+.filter-grid-row2 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.filter-label {
+    font-size: 7.5pt;
+    font-weight: bold;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+/* フィルター内の小サイズドロップダウン */
+.task-filter-select {
+    font-size: 8pt;
+    padding: 3px 6px;
+    border-radius: 5px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    outline: none;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.task-filter-select:hover { border-color: #0284c7; }
+
+.task-sort-select {
+    max-width: 150px;
+}
+
+/* 「☑️ 完了済みも表示」のスイッチ風ボタンラベル */
+.completed-toggle {
+    font-size: 7.5pt;
+    color: #334155;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+    user-select: none;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    padding: 2px 8px;
+    border-radius: 5px;
+    white-space: nowrap;
+}
+.completed-toggle:hover { background: #f1f5f9; border-color: #0284c7; }
+
+/* 会議カード内の「📅 予定(未来)」バッジ */
+.meeting-badge-future {
+    background-color: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 7.5pt;
+    font-weight: bold;
+}
+
+/* 会議カード内の「✅ 終了」バッジ */
+.meeting-badge-ended {
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 7.5pt;
+    font-weight: bold;
+}
+
+/* 縦幅を1行削減したコンパクト版タスクカード */
+.task-row-compact {
+    padding: 8px 12px !important;
+    margin-bottom: 6px !important;
+}
+
+/* タスクカード内の「📌 会議名」青色小バッジ */
+.task-card-meeting-badge {
+    font-size: 7.5pt;
+    color: #0284c7;
+    background-color: #f0f9ff;
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid #bae6fd;
+    font-weight: bold;
+}
+
+/* 1行目に同列配置される「担当者 ｜ 締切」情報 */
+.task-card-meta {
+    font-size: 7.5pt;
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.task-card-content {
+    font-weight: bold;
+    font-size: 9pt;
+    color: #0f172a;
+}
+
+
+/* ==========================================================================
+   13. タスク詳細・変更画面 (task-detail.jsp) 専用機能クラス
+   ========================================================================== */
+
+/* タスク詳細画面の中央白いカード枠 */
+.task-detail-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.task-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+}
+
+.task-detail-title {
+    font-size: 13pt;
+    margin: 0;
+    color: #0f172a;
+}
+
+.task-detail-id-badge {
+    font-size: 8.5pt;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.task-detail-form-group {
+    margin-bottom: 16px;
+}
+
+.task-detail-label {
+    font-size: 8.5pt;
+    font-weight: bold;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.task-detail-input-content {
+    padding: 8px 12px;
+    font-size: 9pt;
+}
+
+/* 担当者選択エリア（メンバー検索・チェックリスト）の灰色枠 */
+.task-detail-assignee-box {
+    background-color: #f8fafc;
+    padding: 14px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 16px;
+}
+
+.task-detail-search-input {
+    padding: 6px 10px;
+    font-size: 8.5pt;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #ffffff;
+}
+
+.task-detail-assignee-list {
+    max-height: 260px;
+    overflow-y: auto;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.assignee-item-label {
+    font-size: 8.5pt;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+/* 「⚠️ 未完了タスク: ○件」赤色警告バッジ */
+.task-detail-badge-pending {
+    font-size: 7.5pt;
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+/* 「✨ 未完了なし」緑色バッジ */
+.task-detail-badge-none {
+    font-size: 7.5pt;
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+.task-detail-email-label {
+    font-size: 7.5pt;
+    color: #475569;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.task-detail-email-input {
+    font-size: 8.5pt;
+    background-color: #ffffff;
+    padding: 6px 10px;
+}
+
+/* 「履行期限」と「進捗ステータス」の2カラム並び */
+.task-detail-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+/* カレンダーと「✕ クリア」ボタンを並べる枠 */
+.task-detail-date-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 0 10px;
+    height: 38px;
+    box-sizing: border-box;
+}
+
+.task-detail-date-inner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    height: 100%;
+}
+
+.task-detail-date-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 0;
+    font-size: 8.5pt;
+    width: 100%;
+    color: #0f172a;
+    cursor: pointer;
+}
+
+/* 期限の「✕ クリア」ボタン */
+.task-detail-clear-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 8pt;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-weight: bold;
+    z-index: 10;
+}
+.task-detail-clear-btn:hover {
+    color: #ef4444;
+}
+
+.task-detail-select-status {
+    padding: 6px 10px;
+    font-size: 8.5pt;
+}
+
+/* 下部フッター領域 */
+.task-detail-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 16px;
+}
+
+.task-detail-nav-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* 「📝 対象会議の議事録へ移動」ボタン */
+.task-detail-btn-meeting {
+    font-size: 8.5pt;
+    padding: 0 12px;
+    height: 36px;
+    color: #0284c7;
+    background-color: #f0f9ff;
+    border: 1px solid #bae6fd;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.task-detail-unlinked-badge {
+    font-size: 8pt;
+    color: #94a3b8;
+    background-color: #f1f5f9;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+/* 「🏠 ダッシュボード」ボタン */
+.task-detail-btn-dashboard {
+    font-size: 8.5pt;
+    padding: 0 12px;
+    height: 36px;
+    color: #475569;
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    cursor: pointer;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.task-detail-action-group {
+    display: flex;
+    gap: 10px;
+}
+
+/* 「💾 変更を更新する」ボタン */
+.task-detail-btn-update {
+    background-color: #0284c7;
+    font-size: 9pt;
 }

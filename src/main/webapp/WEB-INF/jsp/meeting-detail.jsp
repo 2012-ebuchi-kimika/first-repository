@@ -5,7 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <title>📝 議事録投稿 ＆ AI解析 - AI Smart Meeting System</title>
-  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=2">
 </head>
 <body style="background-color: #f1f5f9; margin: 0;">
 
@@ -15,26 +15,37 @@
   <div>trainee1405@company.com <span class="user-badge">管理者</span></div>
 </div>
 
+<!-- 担当者リアルタイム候補用データリスト -->
+<datalist id="assigneeCandidates">
+  <option value="伊藤 (ito@company.com)"></option>
+  <option value="山本 (yamamoto@company.com)"></option>
+  <option value="鈴木 (suzuki@company.com)"></option>
+  <option value="佐藤 (sato@company.com)"></option>
+  <option value="田中 (tanaka@company.com)"></option>
+  <option value="高橋 (takahashi@company.com)"></option>
+</datalist>
+
 <div class="sc03-wrapper">
   <!-- 戻るナビゲーション -->
-  <div style="margin-bottom: 16px;">
-    <a href="${pageContext.request.contextPath}/dashboard" style="text-decoration: none; color: #0284c7; font-size: 9pt; font-weight: bold; display: inline-flex; align-items: center; gap: 4px;">
+  <div class="sc03-nav-back">
+    <a href="${pageContext.request.contextPath}/dashboard" class="sc03-nav-back-link">
       ↩️ ダッシュボードへ戻る
     </a>
   </div>
 
   <div class="sc03-grid">
+    
     <!-- 【左カラム】入力・AI設定エリア -->
     <div class="sc03-card">
-      <h2 style="font-size: 13pt; margin: 0 0 20px 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+      <h2 class="sc03-card-title">
         📝 議事録入力 ＆ AI解析指示
       </h2>
 
-      <form action="${pageContext.request.contextPath}/meetings/analyze" method="POST" onsubmit="return handleAiAnalyze(event)" style="display: flex; flex-direction: column; flex: 1;">
+      <form action="${pageContext.request.contextPath}/meetings/analyze" method="POST" onsubmit="return handleAiAnalyze(event)" class="sc03-form">
         <!-- 1. 会議選択 -->
         <div class="sc03-form-group">
           <label class="sc03-label">対象の会議 <span style="color: #ef4444;">*</span></label>
-          <select name="meetingId" id="meetingSelect" class="sc03-select" required data-testid="meeting-select" onchange="location.href='${pageContext.request.contextPath}/meetings/detail?id=' + this.value;">
+          <select name="meetingId" id="meetingSelect" class="form-select" required data-testid="meeting-select" onchange="location.href='${pageContext.request.contextPath}/meetings/detail?id=' + this.value;">
             <option value="">対象の会議を選択してください</option>
             <c:forEach var="m" items="${meetings}">
               <option value="${m.meetingId}" ${m.meetingId == selectedMeetingId || m.meetingId == param.id ? 'selected' : ''}>
@@ -45,17 +56,17 @@
         </div>
 
         <!-- 2. 文字起こしテキスト -->
-        <div class="sc03-form-group" style="flex: 1; display: flex; flex-direction: column;">
+        <div class="sc03-form-group-flex">
           <label class="sc03-label">文字起こしテキスト <span style="color: #ef4444;">*</span></label>
-          <textarea name="transcript" id="transcriptInput" class="sc03-textarea" style="flex: 1; min-height: 280px;"
+          <textarea name="transcript" id="transcriptInput" class="sc03-textarea"
                     placeholder="会議の文字起こしテキストを貼り付けてください...&#10;例：&#10;田中: 本日のアジェンダは待機学習の進捗についてです。&#10;佐藤: Day 3のDB設計は完了しました。&#10;田中: 了解です。では次回までにFastAPIの基盤作成をお願いします。（担当: sato@company.com、期限: 8/20）" 
                     required data-testid="transcript-input"></textarea>
         </div>
 
         <!-- 3. ペルソナ設定 -->
-        <div class="sc03-form-group" style="margin-top: 12px;">
+        <div class="sc03-form-group">
           <label class="sc03-label">要約トーン (ペルソナ設定)</label>
-          <select name="personaType" id="personaSelect" class="sc03-select" data-testid="persona-select">
+          <select name="personaType" id="personaSelect" class="form-select" data-testid="persona-select">
             <option value="default">👔 標準（標準的なビジネス要約）</option>
             <option value="tsundere">🎀 ツンデレ秘書（ツンツンしながらしっかり要約）</option>
             <option value="hotblooded">🔥 熱血アニキ（熱く成果を鼓舞）</option>
@@ -64,97 +75,102 @@
         </div>
 
         <!-- AI実行ボタン -->
-        <button type="submit" id="aiBtn" class="btn-primary" style="width: 100%; padding: 12px; font-size: 10pt; background-color: #0284c7; margin-top: 8px;" data-testid="ai-summary-btn">
+        <button type="submit" id="aiBtn" class="btn-primary sc03-btn-ai" data-testid="ai-summary-btn">
           ✨ Gemini APIで要約・タスクを抽出する
         </button>
       </form>
     </div>
 
-    <!-- 【右カラム】AI解析結果 ＆ 既存タスクエリア (1:1 均等配置) -->
+    <!-- 【右カラム】AI解析結果 ＆ 既存タスクエリア -->
     <div class="sc03-card">
-      <h2 style="font-size: 13pt; margin: 0 0 16px 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+      <h2 class="sc03-card-title">
         📊 会議情報 ＆ AI解析結果
       </h2>
 
-      <div style="display: flex; flex-direction: column; flex: 1; gap: 16px; min-height: 0;">
+      <!-- 右側全体のコンテナ -->
+      <div class="sc03-right-container">
         
-        <!-- ① 上部：AI解析ステータス ＆ 結果表示エリア (比率 1) -->
-        <div style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
+        <!-- ① 上部：AI解析エリア -->
+        <div class="sc03-ai-box">
           
-          <!-- AI未実行（保存済み要約なし）時の表示 -->
-          <div id="emptyPreview" class="sc03-empty-state" style="flex: 1; display: ${empty savedAiSummary ? 'flex' : 'none'}; flex-direction: column; justify-content: center; align-items: center; box-sizing: border-box;">
-            <div style="font-size: 22pt; margin-bottom: 6px;">🤖</div>
-            <div style="font-weight: bold; font-size: 9.5pt;">AI要約は未生成です</div>
-            <div style="font-size: 8.5pt; margin-top: 4px; color: #64748b; text-align: center;">左側から「Gemini APIで要約・タスクを抽出する」を実行するとここに生成結果が表示されます。</div>
+          <!-- AI未実行時の表示 -->
+          <div id="emptyPreview" class="sc03-empty-state" style="display: ${empty savedAiSummary ? 'flex' : 'none'};">
+            <div style="font-size: 20pt; margin-bottom: 4px;">🤖</div>
+            <div style="font-weight: bold; font-size: 9pt; color: #475569;">AI要約は未生成です</div>
+            <div style="font-size: 8pt; margin-top: 2px; color: #64748b;">「Gemini APIで要約・タスクを抽出する」を実行すると結果が表示されます。</div>
           </div>
 
-          <!-- AI実行後、または保存済み要約がある場合の表示エリア -->
-          <div id="resultPreviewArea" style="display: ${not empty savedAiSummary ? 'block' : 'none'}; flex: 1; overflow-y: auto; padding-right: 4px; min-height: 0;">
+          <!-- AI実行後 / 保存済み要約表示エリア -->
+          <div id="resultPreviewArea" class="sc03-result-area" style="display: ${not empty savedAiSummary ? 'flex' : 'none'};">
+            
             <!-- AI要約カード -->
-            <div style="background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-              <label id="summaryCardLabel" style="font-size: 8.5pt; font-weight: bold; color: #0369a1; display: block; margin-bottom: 4px;">
-                【✨ ${not empty savedAiSummary ? '保存済みのAI要約' : '生成されたAI要約'}】
+            <div class="sc03-summary-card">
+              <label id="summaryCardLabel" class="sc03-summary-label">
+                【✨ ${not empty savedAiSummary ? '保存済みのAI要約（編集可能）' : '生成されたAI要約（編集可能）'}】
               </label>
-              <div id="previewSummary" style="background: #ffffff; border: 1px solid #e0f2fe; padding: 10px; border-radius: 6px; font-size: 8.5pt; line-height: 1.5; color: #1e293b;"><c:out value="${savedAiSummary}"/></div>
+              <textarea id="previewSummary" 
+                        class="sc03-summary-textarea"
+                        oninput="syncSummaryToHidden(this.value)"><c:out value="${savedAiSummary}"/></textarea>
             </div>
 
-            <!-- 今回新しく抽出されたタスクカード -->
-            <div id="newTasksContainer" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-bottom: 12px; display: none;">
-              <label style="font-size: 8.5pt; font-weight: bold; color: #15803d; display: block; margin-bottom: 4px;">【🆕 今回新しく検出されたタスク】</label>
-              <div id="previewTasks" style="background: #ffffff; border: 1px solid #dcfce7; padding: 10px; border-radius: 6px; font-size: 8.5pt; color: #1e293b;"></div>
+            <!-- 今回検出された複数タスク編集カード -->
+            <div id="newTasksContainer" class="sc03-tasks-container">
+              <div class="sc03-tasks-header">
+                <label style="font-size: 8.5pt; font-weight: bold; color: #15803d;">【🆕 検出タスクの事前編集・確認】</label>
+                <button type="button" onclick="addTaskRow('', '', '')" class="sc03-btn-add-task">
+                  ＋ タスク追加
+                </button>
+              </div>
+              <div id="taskRowsList" class="sc03-tasks-list"></div>
             </div>
 
             <!-- DB保存フォーム -->
-            <form action="${pageContext.request.contextPath}/meetings/save-summary" method="POST">
+            <form action="${pageContext.request.contextPath}/meetings/save-summary" method="POST" id="saveSummaryForm" style="margin-top: 2px;">
               <input type="hidden" name="meetingId" id="saveMeetingId" value="<c:out value='${selectedMeetingId}'/>">
               <input type="hidden" name="aiSummary" id="saveAiSummary" value="<c:out value='${savedAiSummary}'/>">
               <input type="hidden" name="taskTitle" id="saveTaskTitle" value="">
               <input type="hidden" name="taskAssignee" id="saveTaskAssignee" value="">
               <input type="hidden" name="taskDueDate" id="saveTaskDueDate" value="">
               
-              <button type="submit" id="saveBtn" class="btn-primary" style="width: 100%; background-color: #16a34a; border: none; padding: 10px; font-size: 9pt; display: none;">
+              <button type="submit" id="saveBtn" class="btn-primary sc03-btn-save" onclick="prepareSubmitData()">
                 💾 この要約と新タスクをDBに保存する
               </button>
             </form>
           </div>
         </div>
 
-        <!-- ② 下部：この会議の登録済みタスク一覧エリア (比率 1 / 動的ループ表示) -->
-        <div style="flex: 1; min-height: 0; background: #fafafa; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; box-sizing: border-box;">
-          <div style="font-size: 8.5pt; font-weight: bold; color: #475569; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+        <!-- ② 下部：この会議の登録済みタスクエリア -->
+        <div class="sc03-registered-tasks-box">
+          <div class="sc03-registered-tasks-header">
             <span>📌 この会議の登録済みタスク</span>
-            <span style="font-size: 7.5pt; background: #e2e8f0; color: #334155; padding: 1px 6px; border-radius: 10px;">
+            <span class="sc03-registered-tasks-count">
               全 ${empty existingTasks ? 0 : existingTasks.size()} 件
             </span>
           </div>
           
-          <!-- タスク表示エリア -->
-          <div style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 2px; flex: 1; min-height: 0;">
+          <div class="sc03-registered-tasks-list">
             <c:choose>
               <c:when test="${not empty existingTasks}">
                 <c:forEach var="task" items="${existingTasks}">
-                  <!-- クリックで SCR-04（タスク詳細画面）へ移動 ＆ ホバー演出 -->
-                  <div onclick="location.href='${pageContext.request.contextPath}/tasks/detail?id=${task.taskId}'"
-                       style="background: #ffffff; border: 1px solid #cbd5e1; padding: 10px 12px; border-radius: 6px; font-size: 8.5pt; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s ease;"
-                       onmouseover="this.style.backgroundColor='#f8fafc'; this.style.borderColor='#0284c7'; this.style.transform='translateY(-1px)';"
-                       onmouseout="this.style.backgroundColor='#ffffff'; this.style.borderColor='#cbd5e1'; this.style.transform='none';">
+                  <div class="sc03-task-item"
+                       onclick="window.open('${pageContext.request.contextPath}/tasks/detail?id=${task.taskId}', '_blank')"
+                       title="別タブでタスク詳細を開く">
                     <div>
-                      <!-- Task.java の taskContent フィールドを参照 -->
                       <span style="font-weight: bold; color: #1e293b;">・<c:out value="${task.taskContent}"/></span>
-                      <span style="font-size: 7.5pt; color: #64748b; margin-left: 6px;">
+                      <span style="font-size: 7.5pt; color: #64748b; margin-left: 4px;">
                         (担当: <c:out value="${empty task.assigneeName ? (empty task.assigneeEmail ? '未割当' : task.assigneeEmail) : task.assigneeName}"/> / 締切: <c:out value="${empty task.dueDate ? '期限なし' : task.dueDate}"/>)
                       </span>
                     </div>
                     <span style="background: ${task.status == 'COMPLETED' ? '#dcfce7' : (task.status == 'IN_PROGRESS' ? '#fef3c7' : '#f1f5f9')}; 
                                  color: ${task.status == 'COMPLETED' ? '#15803d' : (task.status == 'IN_PROGRESS' ? '#d97706' : '#64748b')}; 
-                                 font-size: 7pt; font-weight: bold; padding: 2px 8px; border-radius: 4px;">
+                                 font-size: 7pt; font-weight: bold; padding: 2px 6px; border-radius: 4px;">
                       <c:out value="${empty task.status ? 'TODO' : task.status}"/>
                     </span>
                   </div>
                 </c:forEach>
               </c:when>
               <c:otherwise>
-                <div style="color: #94a3b8; font-size: 8.5pt; text-align: center; margin-top: 20px;">
+                <div style="color: #94a3b8; font-size: 8pt; text-align: center; padding: 12px 0;">
                   登録済みのタスクはありません
                 </div>
               </c:otherwise>
@@ -169,6 +185,81 @@
 </div>
 
 <script>
+  function syncSummaryToHidden(val) {
+    document.getElementById('saveAiSummary').value = val;
+  }
+
+  function addTaskRow(title = '', assignee = '', dueDate = '') {
+    const container = document.getElementById('taskRowsList');
+    const rowId = 'task_row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+
+    const cleanTitle = title.replace(/^\d+\.\s*/, '').trim();
+    const cleanAssignee = assignee.replace(/^\d+\.\s*/, '').trim();
+    let cleanDate = dueDate.replace(/^\d+\.\s*/, '').trim();
+
+    const dateMatch = cleanDate.match(/\d{4}-\d{2}-\d{2}/);
+    if (dateMatch) {
+      cleanDate = dateMatch[0];
+    } else {
+      cleanDate = '';
+    }
+
+    const rowDiv = document.createElement('div');
+    rowDiv.id = rowId;
+    rowDiv.className = 'task-input-row';
+    rowDiv.style.cssText = 'display: flex; gap: 4px; align-items: center; background: #ffffff; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px;';
+
+    rowDiv.innerHTML = `
+      <input type="text" class="form-input row-task-title" value="\${escapeHtml(cleanTitle)}" placeholder="タスク内容" style="flex: 2; height: 32px; font-size: 8.5pt; padding: 0 8px; min-width: 0;">
+      <input type="text" class="form-input row-task-assignee" list="assigneeCandidates" value="\${escapeHtml(cleanAssignee)}" placeholder="担当者 (検索/選択)" style="flex: 1; height: 32px; font-size: 8.5pt; padding: 0 8px; min-width: 0;">
+      <input type="date" class="form-input row-task-date" value="\${escapeHtml(cleanDate)}" style="flex: 1; height: 32px; font-size: 8.5pt; padding: 0 6px; min-width: 0; font-family: inherit;">
+      <button type="button" onclick="removeTaskRow('\${rowId}')" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; padding: 0 4px; font-size: 11pt;" title="このタスクを削除">✕</button>
+    `;
+
+    container.appendChild(rowDiv);
+  }
+
+  function removeTaskRow(rowId) {
+    const row = document.getElementById(rowId);
+    if (row) {
+      row.remove();
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#039;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function prepareSubmitData() {
+    const titles = [];
+    const assignees = [];
+    const dueDates = [];
+
+    document.querySelectorAll('.task-input-row').forEach((row) => {
+      const t = row.querySelector('.row-task-title').value.trim();
+      const a = row.querySelector('.row-task-assignee').value.trim();
+      let d = row.querySelector('.row-task-date').value.trim();
+
+      const dateMatch = d.match(/\d{4}-\d{2}-\d{2}/);
+      if (dateMatch) {
+        d = dateMatch[0];
+      } else {
+        d = '';
+      }
+
+      if (t) {
+        titles.push(t);
+        assignees.push(a);
+        dueDates.push(d);
+      }
+    });
+
+    document.getElementById('saveTaskTitle').value = titles.join(' / ');
+    document.getElementById('saveTaskAssignee').value = assignees.join(' / ');
+    document.getElementById('saveTaskDueDate').value = dueDates.join(' / ');
+  }
+
   function handleAiAnalyze(event) {
     event.preventDefault();
     
@@ -187,21 +278,19 @@
       return false;
     }
 
-    // ボタン非活性化と読み込み表示
     btn.innerText = '⏳ Gemini AIで解析中...';
     btn.disabled = true;
 
-    // ★ 実行時に前回の要約表示欄をクリア・表示領域の準備
     document.getElementById('emptyPreview').style.display = 'none';
-    document.getElementById('resultPreviewArea').style.display = 'block';
-    document.getElementById('summaryCardLabel').innerText = '【✨ 生成されたAI要約】';
-    document.getElementById('previewSummary').innerText = '⏳ AI解析を実行中です...';
-    document.getElementById('previewTasks').innerHTML = '';
+    document.getElementById('resultPreviewArea').style.display = 'flex';
+    document.getElementById('summaryCardLabel').innerText = '【✨ 生成されたAI要約（編集可能）】';
+    document.getElementById('previewSummary').value = '⏳ AI解析を実行中です...';
+    document.getElementById('taskRowsList').innerHTML = '';
     document.getElementById('newTasksContainer').style.display = 'none';
     document.getElementById('saveBtn').style.display = 'none';
 
-    // フォームデータの構築
     const formData = new URLSearchParams();
+    formData.append('meetingId', meetingId);
     formData.append('transcript', transcript);
     formData.append('personaType', persona);
 
@@ -215,50 +304,38 @@
     .then(response => response.json())
     .then(data => {
       const summary = data.summary || "要約が生成されませんでした。";
-      const taskTitle = data.taskTitle || "";
-      const taskAssignee = data.taskAssignee || "";
-      const taskDueDate = data.taskDueDate || "";
+      const rawTitle = data.taskTitle || "";
+      const rawAssignee = data.taskAssignee || "";
+      const rawDueDate = data.taskDueDate || "";
 
-      // Geminiから抽出されたタスクのHTML組み立て
-      let taskHtml = "";
-      if (taskTitle) {
-        taskHtml = `
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0;">
-            <div><b>・\${taskTitle}</b> <span style="color: #64748b;">(AI自動抽出)</span></div>
-            <span style="background-color: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 4px; font-size: 7.5pt; font-weight: bold;">
-              担当: \${taskAssignee || '未指定'} / 期限: \${taskDueDate || '未指定'}
-            </span>
-          </div>
-        `;
-      } else {
-        taskHtml = `<div style="color: #94a3b8;">今回のテキストからタスクは検出されませんでした</div>`;
-      }
-
-      // 新規タスクエリアを表示
       document.getElementById('newTasksContainer').style.display = 'block';
 
-      // エラーが含まれていなければ保存ボタンを表示
+      if (rawTitle && rawTitle.trim()) {
+        const titles = rawTitle.split(/\\|\/|\n|(?=\d+\.\s*)/).map(s => s.trim()).filter(s => s);
+        const assignees = rawAssignee.split(/\\|\/|\n/).map(s => s.trim()).filter(s => s);
+        const dueDates = rawDueDate.split(/\\|\/|\n/).map(s => s.trim()).filter(s => s);
+
+        titles.forEach((t, index) => {
+          addTaskRow(t, assignees[index] || assignees[0] || '', dueDates[index] || dueDates[0] || '');
+        });
+      } else {
+        addTaskRow('', '', '');
+      }
+
       if (!summary.includes("⚠️")) {
         document.getElementById('saveBtn').style.display = 'block';
       }
 
-      // 最新テキスト反映
-      document.getElementById('previewSummary').innerText = summary;
-      document.getElementById('previewTasks').innerHTML = taskHtml;
-
-      // DB保存用 hidden フィールドに値をセット
+      document.getElementById('previewSummary').value = summary;
       document.getElementById('saveMeetingId').value = meetingId;
       document.getElementById('saveAiSummary').value = summary;
-      document.getElementById('saveTaskTitle').value = taskTitle;
-      document.getElementById('saveTaskAssignee').value = taskAssignee;
-      document.getElementById('saveTaskDueDate').value = taskDueDate;
 
       btn.innerText = '✨ Gemini APIで要約・タスクを抽出する';
       btn.disabled = false;
     })
     .catch(error => {
       console.error('Error:', error);
-      document.getElementById('previewSummary').innerText = '⚠️ 通信処理中にエラーが発生しました。';
+      document.getElementById('previewSummary').value = '⚠️ 通信処理中にエラーが発生しました。';
       btn.innerText = '✨ Gemini APIで要約・タスクを抽出する';
       btn.disabled = false;
     });

@@ -3,41 +3,43 @@
 
 <!-- ② ⚙️ 招待グループ管理モーダル -->
 <div id="groupManagementModal" class="modal-overlay">
-  <div class="modal-content" style="max-width: 1080px; width: 92%; padding: 20px 24px;">
-    <div class="modal-header" style="margin-bottom: 16px;">
-      <span style="font-size: 13pt; font-weight: bold;">⚙️ 招待グループの管理</span>
+  <div class="modal-content group-modal-content">
+    
+    <!-- モーダルヘッダー -->
+    <div class="modal-header group-modal-header">
+      <span class="group-modal-title">⚙️ 招待グループの管理</span>
       <button type="button" class="modal-close-btn" onclick="closeGroupModal()">&times;</button>
     </div>
     
-    <form id="groupForm" onsubmit="return handleAddGroup(event)" novalidate>
+    <form id="groupForm" onsubmit="return handleAddGroup(event)" novalidate class="group-form">
       <input type="hidden" id="editingGroupId" name="groupId" value="">
 
       <!-- 3カラム（左・中・右）横並びグリッドレイアウト -->
-      <div style="display: grid; grid-template-columns: 1fr 0.9fr 1.1fr; gap: 16px; align-items: stretch;">
+      <div class="group-grid-3col">
         
         <!-- 【左カラム】：登録済みグループ一覧 -->
-        <div style="background-color: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
-          <label class="form-label" style="font-size: 8.5pt; font-weight: bold; margin-bottom: 8px; display: block;">
+        <div class="group-col-box">
+          <label class="form-label group-col-title">
             📋 登録済みグループ一覧
           </label>
           
-          <div id="registeredGroupList" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+          <div id="registeredGroupList" class="group-registered-list">
             <c:choose>
               <c:when test="${empty groups}">
-                <div id="noGroupMsg" style="font-size: 8pt; color: #64748b; padding: 8px; text-align: center;">登録されたグループはありません</div>
+                <div id="noGroupMsg" class="group-empty-msg">登録されたグループはありません</div>
               </c:when>
               <c:otherwise>
                 <c:forEach var="g" items="${groups}">
                   <c:if test="${not empty g.groupName}">
-                    <div class="group-card-item" id="group-card-${g.groupId}" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px;">
-                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                        <b style="font-size: 8.5pt; color: #0f172a;" class="group-name-text">・<c:out value="${g.groupName}"/></b>
-                        <div style="display: flex; gap: 6px;">
-                          <button type="button" style="color: #0284c7; background: none; border: none; font-size: 7.5pt; cursor: pointer; font-weight: bold; padding: 0;" onclick="editGroup(${g.groupId}, '<c:out value="${g.groupName}"/>', '<c:out value="${g.members}"/>')">[編集]</button>
-                          <button type="button" style="color: #ef4444; background: none; border: none; font-size: 7.5pt; cursor: pointer; padding: 0;" onclick="deleteGroup(${g.groupId}, '<c:out value="${g.groupName}"/>')">[削除]</button>
+                    <div class="group-card-item" id="group-card-${g.groupId}">
+                      <div class="group-card-header">
+                        <b class="group-name-text group-card-title">・<c:out value="${g.groupName}"/></b>
+                        <div class="group-action-btns">
+                          <button type="button" class="group-btn-edit" onclick="editGroup(${g.groupId}, '<c:out value="${g.groupName}"/>', '<c:out value="${g.members}"/>')">[編集]</button>
+                          <button type="button" class="group-btn-delete" onclick="deleteGroup(${g.groupId}, '<c:out value="${g.groupName}"/>')">[削除]</button>
                         </div>
                       </div>
-                      <div style="font-size: 7.5pt; color: #64748b; line-height: 1.3; word-break: break-all;" class="group-members-text">
+                      <div class="group-members-text">
                         <c:out value="${g.members}"/>
                       </div>
                     </div>
@@ -49,55 +51,55 @@
         </div>
 
         <!-- 【中央カラム】：グループ名設定・新規/編集切り替え -->
-        <div style="background-color: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="group-col-center">
           <div>
-            <div style="margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <span id="formModeTitle" style="font-size: 8.5pt; font-weight: bold; color: #0f172a;">➕ 新規グループ作成</span>
-                  <span id="targetGroupBadge" style="display: none; font-size: 7.5pt; background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 1px 6px; border-radius: 4px; font-weight: bold;"></span>
+            <div class="group-center-header">
+              <div class="group-center-header-flex">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span id="formModeTitle" class="group-mode-title">➕ 新規グループ作成</span>
+                  <span id="targetGroupBadge" class="group-target-badge"></span>
                 </div>
               </div>
-              <div id="resetModeArea" style="display: none; margin-top: 4px;">
-                <button type="button" style="font-size: 7.5pt; color: #0284c7; background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0; display: inline-flex; align-items: center; gap: 2px;" onclick="resetGroupForm()">
+              <div id="resetModeArea" style="display: none; margin-top: 8px;">
+                <button type="button" class="group-reset-btn" onclick="resetGroupForm()">
                   ↩️ 新規作成モードに戻る
                 </button>
               </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 8px;">
-              <label class="form-label" style="font-size: 8.0pt;">グループ名 <span style="color: #ef4444;">*</span></label>
-              <input type="text" id="newGroupName" name="groupName" class="form-input" placeholder="例：インフラチーム" style="padding: 6px 10px; font-size: 8.5pt; background-color: #ffffff;">
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label class="form-label" style="font-size: 9.5pt; font-weight: bold; margin-bottom: 6px; display: block;">グループ名 <span style="color: #ef4444;">*</span></label>
+              <input type="text" id="newGroupName" name="groupName" class="form-input group-input-full" placeholder="例：インフラチーム">
             </div>
           </div>
 
-          <div style="font-size: 7.5pt; color: #64748b; line-height: 1.4; background: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #cbd5e1;">
-            💡 <b>使い方</b><br>
-            ・左の [編集] を押すと既存グループのメンバーを変更できます。<br>
-            ・右側でメンバーにチェックを入れて保存してください。
+          <div class="group-guide-box">
+            💡 <b>使い方ガイド</b><br>
+            ・左の [編集] ボタンを押すと既存グループのメンバー構成を修正できます。<br>
+            ・右のカラムで追加したいメンバーにチェックを入れて保存してください。
           </div>
         </div>
 
         <!-- 【右カラム】：メンバー選択 -->
-        <div style="background-color: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
-          <label class="form-label" style="margin-bottom: 6px; font-weight: bold; font-size: 8.5pt;">
+        <div class="group-col-box">
+          <label class="form-label group-col-title">
             👤 グループメンバー選択
           </label>
           
-          <div style="margin-bottom: 8px;">
-            <input type="text" id="groupMemberSearchInput" class="form-input" placeholder="🔍 名前・メールで絞り込み..." oninput="filterGroupMemberList()" style="padding: 5px 8px; font-size: 8pt; width: 100%; box-sizing: border-box; background-color: #ffffff;">
+          <div style="margin-bottom: 12px;">
+            <input type="text" id="groupMemberSearchInput" class="form-input group-member-search" placeholder="🔍 名前・メールで絞り込み..." oninput="filterGroupMemberList()">
           </div>
 
-          <div id="groupMemberListContainer" style="max-height: 110px; overflow-y: auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 6px; display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px;">
+          <div id="groupMemberListContainer" class="group-member-checkbox-list">
             <c:choose>
               <c:when test="${empty users}">
-                <div style="font-size: 8pt; color: #64748b; padding: 8px; text-align: center;">登録メンバーがいません</div>
+                <div style="font-size: 9pt; color: #64748b; padding: 16px; text-align: center;">登録メンバーがいません</div>
               </c:when>
               <c:otherwise>
                 <c:forEach var="u" items="${users}">
-                  <label class="group-member-item-label" data-search-text="<c:out value='${u.name}'/> <c:out value='${u.email}'/>" style="font-size: 8pt; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 3px 4px; border-radius: 3px;">
+                  <label class="group-member-item-label" data-search-text="<c:out value='${u.name}'/> <c:out value='${u.email}'/>" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">
                     <span>
-                      <input type="checkbox" class="group-member-checkbox" value="<c:out value='${u.email}'/>" onchange="syncGroupMembers()"> 
+                      <input type="checkbox" class="group-member-checkbox" value="<c:out value='${u.email}'/>" onchange="syncGroupMembers()" style="transform: scale(1.1); margin-right: 6px;"> 
                       <c:out value="${u.name}"/> (<c:out value="${u.email}"/>)
                     </span>
                   </label>
@@ -106,16 +108,16 @@
             </c:choose>
           </div>
 
-          <label class="form-label" style="font-size: 7.5pt; color: #475569; margin-bottom: 2px;">登録予定メンバー一覧 (カンマ区切り): <span style="color: #ef4444;">*</span></label>
-          <textarea id="newGroupMembers" name="members" class="form-input" style="height: 44px; font-size: 8pt; resize: vertical; background-color: #ffffff;" placeholder="選択したメンバーが自動入力されます"></textarea>
+          <label class="form-label" style="font-size: 8.5pt; color: #475569; margin-bottom: 6px; font-weight: bold;">登録予定メンバー一覧 (カンマ区切り): <span style="color: #ef4444;">*</span></label>
+          <textarea id="newGroupMembers" name="members" class="form-input group-textarea-full" placeholder="選択したメンバーが自動入力されます"></textarea>
         </div>
 
       </div>
       
       <!-- フッターボタンエリア -->
-      <div class="modal-footer" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px;">
-        <button type="button" class="btn-secondary" onclick="closeGroupModal()">閉じる</button>
-        <button type="submit" id="submitGroupBtn" class="btn-primary" style="background-color: #0284c7; font-size: 8.5pt;">
+      <div class="modal-footer group-footer-flex">
+        <button type="button" class="btn-secondary group-btn-close" onclick="closeGroupModal()">閉じる</button>
+        <button type="submit" id="submitGroupBtn" class="btn-primary group-btn-submit">
           グループを追加保存
         </button>
       </div>
@@ -134,7 +136,6 @@
     if (modal) modal.style.display = 'none';
   }
 
-  // ★ JSP(フロントエンド)バリデーションチェック関数
   function validateGroupForm(groupName, members) {
     if (!groupName) {
       alert('⚠️ グループ名を入力してください。');
@@ -157,7 +158,6 @@
     return true;
   }
 
-  // ★ 送信処理ハンドラー（バリデーション通過時のみFetch通信実行）
   function handleAddGroup(event) {
     event.preventDefault();
 
@@ -165,7 +165,6 @@
     const groupName = document.getElementById('newGroupName').value.trim();
     const members = document.getElementById('newGroupMembers').value.trim();
 
-    // ★ フロント側バリデーション実行（違反時はここでストップ）
     if (!validateGroupForm(groupName, members)) {
       return false;
     }
@@ -194,24 +193,22 @@
       const container = document.getElementById('registeredGroupList');
 
       if (editingId) {
-        // 既存カード更新
         const existingCard = document.getElementById('group-card-' + editingId);
         if (existingCard) {
           existingCard.querySelector('.group-name-text').innerText = '・' + savedGroup.groupName;
           existingCard.querySelector('.group-members-text').innerText = savedGroup.members;
         }
       } else {
-        // 新規カード先頭追加
         const newHtml = `
-          <div class="group-card-item" id="group-card-\${savedGroup.groupId}" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-              <b style="font-size: 8.5pt; color: #0f172a;" class="group-name-text">・\${escapeHtml(savedGroup.groupName)}</b>
-              <div style="display: flex; gap: 6px;">
-                <button type="button" style="color: #0284c7; background: none; border: none; font-size: 7.5pt; cursor: pointer; font-weight: bold; padding: 0;" onclick="editGroup(\${savedGroup.groupId}, '\${escapeHtml(savedGroup.groupName)}', '\${escapeHtml(savedGroup.members)}')">[編集]</button>
-                <button type="button" style="color: #ef4444; background: none; border: none; font-size: 7.5pt; cursor: pointer; padding: 0;" onclick="deleteGroup(\${savedGroup.groupId}, '\${escapeHtml(savedGroup.groupName)}')">[削除]</button>
+          <div class="group-card-item" id="group-card-\${savedGroup.groupId}">
+            <div class="group-card-header">
+              <b class="group-name-text group-card-title">・\${escapeHtml(savedGroup.groupName)}</b>
+              <div class="group-action-btns">
+                <button type="button" class="group-btn-edit" onclick="editGroup(\${savedGroup.groupId}, '\${escapeHtml(savedGroup.groupName)}', '\${escapeHtml(savedGroup.members)}')">[編集]</button>
+                <button type="button" class="group-btn-delete" onclick="deleteGroup(\${savedGroup.groupId}, '\${escapeHtml(savedGroup.groupName)}')">[削除]</button>
               </div>
             </div>
-            <div style="font-size: 7.5pt; color: #64748b; line-height: 1.3; word-break: break-all;" class="group-members-text">
+            <div class="group-members-text">
               \${escapeHtml(savedGroup.members)}
             </div>
           </div>
@@ -229,7 +226,6 @@
     return false;
   }
 
-  // ★ 非同期での削除処理
   function deleteGroup(groupId, groupName) {
     if (!confirm('グループ「' + groupName + '」を削除してもよろしいですか？')) return;
 
