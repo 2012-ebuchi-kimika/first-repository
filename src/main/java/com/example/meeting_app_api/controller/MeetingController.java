@@ -3,6 +3,7 @@ package com.example.meeting_app_api.controller;
 import com.example.meeting_app_api.entity.Meeting;
 import com.example.meeting_app_api.entity.Task;
 import com.example.meeting_app_api.entity.User;
+import com.example.meeting_app_api.service.GoogleCalendarService;
 import com.example.meeting_app_api.service.MeetingService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,44 +16,107 @@ import java.util.Map;
 public class MeetingController {
 
     private final MeetingService meetingService;
+    private final GoogleCalendarService googleCalendarService;
 
-    public MeetingController(MeetingService meetingService) {
+    // コンストラクタインジェクション（推奨される書き方）
+    public MeetingController(MeetingService meetingService, GoogleCalendarService googleCalendarService) {
         this.meetingService = meetingService;
+        this.googleCalendarService = googleCalendarService;
     }
 
+    // 1. 議事録投稿＆AI解析画面の表示
     @GetMapping("/meetings/detail")
     public String showMeetingDetail(
-            @RequestParam(name = "id", required = false) Long id, 
+            @RequestParam(name = "id", required = false) Long meetingId,
             Model model) {
-        
+
         List<Meeting> meetings = meetingService.getAllMeetings(null, true);
-        model.addAttribute("meetings", meetings);
-        model.addAttribute("selectedMeetingId", id);
 
-        List<User> users = meetingService.getAllUsers();
-        model.addAttribute("users", users);
-
-        if (id != null) {
-            model.addAttribute("savedAiSummary", meetingService.getSavedAiSummary(id, meetings));
-            List<Task> existingTasks = meetingService.getExistingTasksForMeeting(id, users);
-            model.addAttribute("existingTasks", existingTasks);
+        // IDが指定されていない場合はリストの先頭の会議IDを初期選択
+        if (meetingId == null && !meetings.isEmpty()) {
+            meetingId = meetings.get(0).getMeetingId() != null 
+                    ? meetings.get(0).getMeetingId().longValue() 
+                    : null;
         }
+
+        // 保存済み要約と既存タスクの取得
+        String savedAiSummary = meetingService.getSavedAiSummary(meetingId, meetings);
+        List<User> users = meetingService.getAllUsers();
+        List<Task> existingTasks = meetingService.getExistingTasksForMeeting(meetingId, users);
+
+        model.addAttribute("meetings", meetings);
+        model.addAttribute("selectedMeetingId", meetingId);
+        model.addAttribute("savedAiSummary", savedAiSummary);
+        model.addAttribute("existingTasks", existingTasks);
 
         return "meeting-detail";
     }
 
+    // 2. 新規会議作成
+    @PostMapping("/meetings/create")
+    public String createMeeting(
+            @ModelAttribute Meeting meeting,
+            @RequestParam(name = "attendeeEmails", required = false) String attendeeEmails,
+            @RequestParam(name = "actionType", defaultValue = "saveOnly") String actionType) {
+
+        if (attendeeEmails != null) {
+            meeting.setAttendeeEmails(attendeeEmails);
+        }
+
+        // 1. Google カレンダーへ登録し eventId を取得
+        String googleEventId = googleCalendarService.createGoogleEvent(meeting);
+        meeting.setGoogleEventId(googleEventId);
+
+        // 2. DBへ保存
+        Integer newMeetingId = meetingService.createMeeting(meeting);
+
+        if ("goToDetail".equals(actionType)) {
+            return "redirect:/meetings/detail?id=" + newMeetingId;
+        } else {
+            return "redirect:/dashboard";
+        }
+    }
+
+    // 3. 会議の編集・更新処理（追加）
+    @PostMapping("/meetings/update")
+    public String updateMeeting(
+            @ModelAttribute Meeting meeting,
+            @RequestParam(name = "attendeeEmails", required = false) String attendeeEmails) {
+
+        if (attendeeEmails != null) {
+            meeting.setAttendeeEmails(attendeeEmails);
+        }
+
+        // DBの更新処理
+        meetingService.updateMeeting(meeting);
+
+        return "redirect:/dashboard";
+    }
+
+    // 4. 会議の削除処理（追加）
+    @PostMapping("/meetings/delete")
+    public String deleteMeeting(@RequestParam("meetingId") Integer meetingId) {
+
+        // DBからの削除処理
+        meetingService.deleteMeeting(meetingId);
+
+        return "redirect:/dashboard";
+    }
+
+    // 5. Gemini API非同期解析 (Fetch API用)
     @PostMapping("/meetings/analyze")
     @ResponseBody
-    public Map<String, Object> analyzeMeeting(
-            @RequestParam(name = "meetingId", required = false) Long meetingId,
+    public Map<String, Object> analyzeTranscript(
+            @RequestParam("meetingId") Long meetingId,
             @RequestParam("transcript") String transcript,
             @RequestParam(name = "personaType", defaultValue = "default") String personaType) {
-        
+
         return meetingService.analyzeTranscript(meetingId, transcript, personaType);
     }
 
+    // 6. 要約とタスクのDB保存
     @PostMapping("/meetings/save-summary")
-    public String saveSummary(
+    public String saveSummaryAndTasks(
             @RequestParam("meetingId") Long meetingId,
             @RequestParam("aiSummary") String aiSummary,
             @RequestParam(name = "taskTitle", required = false) String taskTitle,
@@ -60,28 +124,7 @@ public class MeetingController {
             @RequestParam(name = "taskDueDate", required = false) String taskDueDate) {
 
         meetingService.saveSummaryAndTasks(meetingId, aiSummary, taskTitle, taskAssignee, taskDueDate);
+
         return "redirect:/meetings/detail?id=" + meetingId;
-    }
-
-    @GetMapping("/api/meetings")
-    @ResponseBody
-    public List<Meeting> getMeetings(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(name = "showAll", required = false, defaultValue = "false") boolean showAll) {
-        return meetingService.getAllMeetings(keyword, showAll);
-    }
-
-    @PostMapping("/meetings/create")
-    public String createMeeting(
-            @ModelAttribute Meeting meeting,
-            @RequestParam(name = "actionType", defaultValue = "saveOnly") String actionType) {
-
-        Integer meetingId = meetingService.createMeeting(meeting);
-
-        if ("goToDetail".equals(actionType)) {
-            return "redirect:/meetings/detail?id=" + meetingId;
-        } else {
-            return "redirect:/dashboard";
-        }
     }
 }

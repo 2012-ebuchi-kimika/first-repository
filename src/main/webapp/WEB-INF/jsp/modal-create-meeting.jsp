@@ -7,11 +7,11 @@
     
     <!-- ヘッダー -->
     <div class="modal-header modal-header-large">
-      <span class="modal-title-text">📅 新規会議を作成</span>
+      <span class="modal-title-text" id="modalTitleText">📅 新規会議を作成</span>
       <button type="button" class="modal-close-btn" onclick="closeModal()">&times;</button>
     </div>
     
-    <form action="${pageContext.request.contextPath}/meetings/create" method="POST" class="modal-body-form">
+    <form action="${pageContext.request.contextPath}/meetings/create" id="meetingForm" method="POST" class="modal-body-form">
       
       <!-- 左右2カラムグリッド -->
       <div class="modal-body-grid">
@@ -51,8 +51,8 @@
               </c:forEach>
             </select>
             
-            <!-- 👥 選択グループのメンバー一覧表示 -->
-            <div id="memberListDisplay" class="modal-members-display">
+            <!-- 👥 選択グループのメンバー一覧表示（初期は非表示） -->
+            <div id="memberListDisplay" class="modal-members-display" style="display: none;">
               👥 <b>グループメンバー:</b> <span id="memberNames"></span>
             </div>
           </div>
@@ -93,9 +93,9 @@
               </c:choose>
             </div>
 
-            <!-- 登録予定メンバー一覧 -->
+            <!-- 参加予定全メンバー一覧 -->
             <label class="form-label" style="font-size: 8pt; color: #475569; margin-bottom: 4px; font-weight: bold;">参加予定全メンバー一覧 (カンマ区切り):</label>
-            <textarea name="invitedMembers" id="invitedMembersTextarea" class="form-input modal-textarea-full" placeholder="グループメンバーおよび選択した個人が自動入力されます"></textarea>
+            <textarea name="attendeeEmails" id="invitedMembersTextarea" class="form-input modal-textarea-full" placeholder="グループメンバーおよび選択した個人が自動入力されます"></textarea>
           </div>
 
           <!-- 2. Google Meet URL 自動発行ブロック -->
@@ -125,22 +125,63 @@
 </div>
 
 <script>
-  function openModal() {
+  // ★ モーダルの完全クリア・初期化関数
+  function resetMeetingModal() {
     const modal = document.getElementById('createMeetingModal');
-    if (modal) {
-      modal.style.display = 'flex';
-      
-      // モーダルを開いた時にチェック状態と出力を初期化リセット
-      document.querySelectorAll('.member-checkbox').forEach(cb => {
-        cb.checked = false;
-        cb.disabled = false;
-      });
-      document.querySelectorAll('.group-badge').forEach(badge => {
-        badge.style.display = 'none';
-      });
-      document.getElementById('groupSelect').value = '';
-      updateGroupMembers();
+    if (!modal) return;
+
+    // 1. フォーム値リセット
+    const form = document.getElementById('meetingForm');
+    if (form) {
+      form.reset();
+      form.action = '${pageContext.request.contextPath}/meetings/create';
     }
+
+    // 2. タイトルとhidden IDのクリア
+    const titleText = document.getElementById('modalTitleText');
+    if (titleText) titleText.innerText = '📅 新規会議を作成';
+
+    const hiddenId = document.getElementById('modalMeetingId');
+    if (hiddenId) hiddenId.remove();
+
+    // 3. グループ選択セレクトボックスのクリア
+    const groupSel = document.getElementById('groupSelect');
+    if (groupSel) groupSel.value = '';
+
+    // 4. グループ表示枠の完全非表示
+    const displayArea = document.getElementById('memberListDisplay');
+    if (displayArea) displayArea.style.display = 'none';
+
+    const namesElem = document.getElementById('memberNames');
+    if (namesElem) namesElem.innerText = '';
+
+    // 5. チェックボックス・disabled・赤文字バッジの全クリア
+    document.querySelectorAll('.member-checkbox').forEach(cb => {
+      cb.checked = false;
+      cb.disabled = false;
+    });
+
+    document.querySelectorAll('.group-badge').forEach(badge => {
+      badge.style.display = 'none';
+    });
+
+    // 6. テキストエリア・Meet URLのクリア
+    const textarea = document.getElementById('invitedMembersTextarea');
+    if (textarea) textarea.value = '';
+
+    const meetDisplay = document.getElementById('meetUrlDisplay');
+    if (meetDisplay) {
+      meetDisplay.href = '#';
+      meetDisplay.innerText = '未発行';
+    }
+    const meetInput = document.getElementById('meetUrlInput');
+    if (meetInput) meetInput.value = '';
+  }
+
+  function openModal() {
+    resetMeetingModal();
+    const modal = document.getElementById('createMeetingModal');
+    if (modal) modal.style.display = 'flex';
   }
 
   function closeModal() {
@@ -148,38 +189,39 @@
     if (modal) modal.style.display = 'none';
   }
 
-  // グループ選択時の連動処理（文字列クレンジング強化版）
   function updateGroupMembers() {
     const selectElem = document.getElementById('groupSelect');
+    if (!selectElem) return;
+    
     const selectedOption = selectElem.options[selectElem.selectedIndex];
     const displayArea = document.getElementById('memberListDisplay');
     const namesElem = document.getElementById('memberNames');
     
-    const membersAttr = selectedOption ? selectedOption.getAttribute('data-members') : '';
+    const membersAttr = (selectedOption && selectedOption.value) ? selectedOption.getAttribute('data-members') : '';
     
     const groupEmails = membersAttr 
       ? membersAttr.split(',').map(e => e.trim().toLowerCase()).filter(e => e !== '') 
       : [];
 
-    if (groupEmails.length > 0) {
+    if (groupEmails.length > 0 && displayArea && namesElem) {
       namesElem.innerText = groupEmails.join(', ');
       displayArea.style.display = 'block';
-    } else {
+    } else if (displayArea) {
       displayArea.style.display = 'none';
+      if (namesElem) namesElem.innerText = '';
     }
 
-    // 個別選択リストの自動制御
     document.querySelectorAll('.member-checkbox').forEach(cb => {
       const email = cb.value.trim().toLowerCase();
       const badge = document.getElementById('badge-' + cb.value);
 
-      if (groupEmails.includes(email)) {
+      if (groupEmails.length > 0 && groupEmails.includes(email)) {
         cb.checked = true;
-        cb.disabled = true; // グループメンバーは自動でチェック＆固定
+        cb.disabled = true;
         if (badge) badge.style.display = 'inline';
       } else {
         cb.disabled = false;
-        cb.checked = false; // グループに含まれない場合はチェック解除
+        cb.checked = false;
         if (badge) badge.style.display = 'none';
       }
     });
@@ -189,21 +231,22 @@
 
   function syncSelectedMembers() {
     const selectElem = document.getElementById('groupSelect');
-    const selectedOption = selectElem.options[selectElem.selectedIndex];
+    const selectedOption = (selectElem && selectElem.value) ? selectElem.options[selectElem.selectedIndex] : null;
     const membersAttr = selectedOption ? selectedOption.getAttribute('data-members') : '';
     const groupEmails = membersAttr ? membersAttr.split(',').map(e => e.trim()).filter(e => e !== '') : [];
 
-    // 手動でチェックを入れた個別のメンバーを取得
     const checkedBoxes = document.querySelectorAll('.member-checkbox:checked:not(:disabled)');
     const individualEmails = Array.from(checkedBoxes).map(cb => cb.value.trim());
 
-    // 重複を除外してカンマ区切り出力
     const allEmails = Array.from(new Set([...groupEmails, ...individualEmails]));
-    document.getElementById('invitedMembersTextarea').value = allEmails.join(', ');
+    const textarea = document.getElementById('invitedMembersTextarea');
+    if (textarea) textarea.value = allEmails.join(', ');
   }
 
   function filterMemberList() {
-    const query = document.getElementById('memberSearchInput').value.toLowerCase().trim();
+    const input = document.getElementById('memberSearchInput');
+    if (!input) return;
+    const query = input.value.toLowerCase().trim();
     const items = document.querySelectorAll('.member-item-label');
 
     items.forEach(item => {

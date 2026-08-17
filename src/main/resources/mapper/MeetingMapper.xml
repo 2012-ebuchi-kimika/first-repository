@@ -4,6 +4,7 @@
 
 <mapper namespace="com.example.meeting_app_api.mapper.MeetingMapper">
 
+    <!-- 1. 一覧取得 -->
     <select id="findAll" resultType="com.example.meeting_app_api.entity.Meeting">
         SELECT m.* 
         FROM meetings m
@@ -25,12 +26,6 @@
                 ]]>
             </if>
         </where>
-        <!-- 
-            スマートソート順:
-            1. 未来の予定（現在時刻より後）を上に、過去の会議を下にグループ分け
-            2. 未来の予定の中では「開催日時が近い順（昇順 ASC）」
-            3. 過去の会議の中では「開催日時が新しい順（降順 DESC）」
-        -->
         <![CDATA[
         ORDER BY 
             CASE WHEN m.start_time >= NOW() THEN 0 ELSE 1 END ASC,
@@ -39,18 +34,44 @@
         ]]>
     </select>
 
+    <!-- 2. ID指定による1件取得（削除・編集時の情報取得用） -->
+    <select id="findById" resultType="com.example.meeting_app_api.entity.Meeting">
+        SELECT * FROM meetings WHERE meeting_id = #{meetingId}
+    </select>
+
+    <!-- 3. 新規登録（google_event_id を追加） -->
     <insert id="insert" parameterType="com.example.meeting_app_api.entity.Meeting" useGeneratedKeys="true" keyProperty="meetingId">
         INSERT INTO meetings (
             title,
             start_time,
             persona_type,
+            attendee_emails,
+            google_event_id,
             created_at
         ) VALUES (
             #{title},
             #{startTime},
             #{personaType},
+            #{attendeeEmails},
+            #{googleEventId},
             NOW()
         )
     </insert>
+
+    <!-- 4. 更新処理（編集機能用） -->
+    <update id="update" parameterType="com.example.meeting_app_api.entity.Meeting">
+        UPDATE meetings
+        SET 
+            title = #{title},
+            start_time = #{startTime},
+            attendee_emails = #{attendeeEmails}
+        WHERE 
+            meeting_id = #{meetingId}
+    </update>
+
+    <!-- 5. 削除処理（削除機能用） -->
+    <delete id="deleteById">
+        DELETE FROM meetings WHERE meeting_id = #{meetingId}
+    </delete>
 
 </mapper>

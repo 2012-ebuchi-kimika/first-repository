@@ -29,7 +29,7 @@
     
     <!-- アクションバー -->
     <div class="action-bar action-bar-slim">
-      <button type="button" class="btn-primary btn-primary-slim" onclick="openModal()">＋ 新規会議を作成</button>
+      <button type="button" class="btn-primary btn-primary-slim" onclick="openCreateModal()">＋ 新規会議を作成</button>
       
       <div class="search-container">
         <div class="search-box-group">
@@ -66,24 +66,66 @@
               <c:otherwise>
                 <c:forEach var="m" items="${meetings}">
                   <div class="meeting-item" 
-                       data-start-time="<c:out value='${m.startTime}'/>"
+                       data-meeting-id="${m.meetingId}"
+                       data-title="<c:out value='${m.title}'/>"
+                       data-start-time="${m.startTime}"
+                       data-attendee-emails="<c:out value='${m.attendeeEmails}'/>"
                        onclick="location.href='${pageContext.request.contextPath}/meetings/detail?id=${m.meetingId}'">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                      <div class="meeting-title"><c:out value="${m.title}"/></div>
-                      <c:choose>
-                        <c:when test="${m.startTime > currentFormattedDate}">
-                          <span class="meeting-badge-future">📅 予定 (未来)</span>
-                        </c:when>
-                        <c:otherwise>
-                          <span class="meeting-badge-ended">✅ 終了</span>
-                        </c:otherwise>
-                      </c:choose>
+                    
+                    <!-- 1行目：タイトル ＆ [編集][削除] ＋ バッジ固定 -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px;">
+                      
+                      <!-- タイトル領域 -->
+                      <div class="meeting-title" 
+                           title="<c:out value='${m.title}'/>" 
+                           style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0;">
+                        <c:out value="${m.title}"/>
+                      </div>
+
+                      <!-- 右側操作エリア -->
+                      <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+
+                        <!-- 会議実施状況 -->
+                        <c:choose>
+                          <c:when test="${m.startTime > currentFormattedDate}">
+                            <span class="meeting-badge-future">📅 予定 (未来)</span>
+                          </c:when>
+                          <c:otherwise>
+                            <span class="meeting-badge-ended">✅ 終了</span>
+                          </c:otherwise>
+                        </c:choose>
+
+                        <div style="font-size: 8pt; display: flex; gap: 6px;">
+                          <button type="button" 
+                                  style="color: #0284c7; background: none; border: none; cursor: pointer; padding: 0; font-weight: bold; font-size: 8pt;" 
+                                  onclick="openEditMeetingModal(event, this)">
+                            [編集]
+                          </button>
+                          <button type="button" 
+                                  style="color: #ef4444; background: none; border: none; cursor: pointer; padding: 0; font-size: 8pt;" 
+                                  onclick="deleteMeeting(event, this)">
+                            [削除]
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
-                    <div class="meeting-date">
-                      🕒 <c:out value="${m.startTime}"/> | ペルソナ: <c:out value="${empty m.personaType ? '標準' : m.personaType}"/>
+                    <!-- 2行目：日時 ＋ 参加者 -->
+                    <div class="meeting-date" style="display: flex; align-items: center; gap: 6px;">
+                      <span style="white-space: nowrap;">🕒 <c:out value="${m.startTime}"/></span>
+                      <span>|</span>
+                      <div class="attendee-tooltip-container" title="👥 クリック/ホバーで全リスト表示">
+                        👥 参加者: <c:out value="${empty m.attendeeEmails ? '未設定' : m.attendeeEmails}"/>
+                        <c:if test="${not empty m.attendeeEmails}">
+                          <div class="tooltip-text">
+                            <strong style="color: #38bdf8; display: block; margin-bottom: 2px;">👥 全参加者メンバー:</strong>
+                            <c:out value="${m.attendeeEmails}"/>
+                          </div>
+                        </c:if>
+                      </div>
                     </div>
 
+                    <!-- 3行目：AI要約ボックス -->
                     <c:choose>
                       <c:when test="${not empty m.aiSummary}">
                         <div class="ai-summary-box">
@@ -183,14 +225,12 @@
                 <c:forEach var="t" items="${tasks}">
                   <div class="task-row task-row-compact ${t.status == 'IN_PROGRESS' ? 'status-in-progress' : ''}" 
                        data-status="<c:out value='${t.status}'/>"
-                       data-assignee="<c:out value='${empty t.assigneeName ? \"未設定\" : t.assigneeName}'/>"
-                       data-urgency="<c:out value='${empty t.dueUrgency ? \"NONE\" : t.dueUrgency}'/>"
-                       data-due-date="<c:out value='${empty t.dueDate ? \"9999-99-99\" : t.dueDate}'/>"
+                       data-assignee="<c:out value='${empty t.assigneeName ? "未設定" : t.assigneeName}'/>"
+                       data-urgency="<c:out value='${empty t.dueUrgency ? "NONE" : t.dueUrgency}'/>"
+                       data-due-date="<c:out value='${empty t.dueDate ? "9999-99-99" : t.dueDate}'/>"
                        onclick="window.open('${pageContext.request.contextPath}/tasks/detail?id=${t.taskId}', '_blank')">
                     
                     <div style="flex: 1; padding-right: 8px;">
-                      
-                      <!-- 1行目：会議名バッジ ＋ 担当者 ＋ 締切バッジ同列 -->
                       <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap;">
                         <div class="task-card-meeting-badge">
                           📌 <c:out value="${empty t.meetingTitle ? '未紐付け' : t.meetingTitle}"/>
@@ -216,15 +256,21 @@
                         </div>
                       </div>
 
-                      <!-- 2行目：タスク内容 -->
                       <div class="task-card-content"><c:out value="${t.taskContent}"/></div>
-                      
                     </div>
 
-                    <!-- 右側：ステータスバッジ -->
-                    <span class="badge-status" style="background: ${t.status == 'COMPLETED' ? '#dcfce7' : ''}; color: ${t.status == 'COMPLETED' ? '#15803d' : ''}; align-self: center;">
-                      <c:out value="${t.status}"/>
-                    </span>
+                    <c:choose>
+                      <c:when test="${t.status == 'COMPLETED'}">
+                        <span class="badge-status" style="background: #dcfce7; color: #15803d; align-self: center;">
+                          <c:out value="${t.status}"/>
+                        </span>
+                      </c:when>
+                      <c:otherwise>
+                        <span class="badge-status" style="align-self: center;">
+                          <c:out value="${t.status}"/>
+                        </span>
+                      </c:otherwise>
+                    </c:choose>
                   </div>
                 </c:forEach>
               </c:otherwise>
@@ -246,6 +292,138 @@
     if (event.target === meetingModal && typeof closeModal === 'function') closeModal();
     if (event.target === groupModal && typeof closeGroupModal === 'function') closeGroupModal();
   };
+
+  // ★ 1. 新規作成ボタンから呼び出す（確実にリセット関数を通す）
+  function openCreateModal() {
+    if (typeof resetMeetingModal === 'function') {
+      resetMeetingModal();
+    }
+    const modal = document.getElementById('createMeetingModal');
+    if (modal) {
+      modal.style.display = 'flex';
+    } else if (typeof openModal === 'function') {
+      openModal();
+    }
+  }
+
+  // 2. 編集モーダルを開く
+  function openEditMeetingModal(evt, btnElem) {
+    if (evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+    }
+
+    // 開く前にまずクリア
+    if (typeof resetMeetingModal === 'function') {
+      resetMeetingModal();
+    }
+
+    const item = btnElem.closest('.meeting-item');
+    if (!item) return;
+
+    const meetingId = item.getAttribute('data-meeting-id');
+    const title = item.getAttribute('data-title');
+    const startTime = item.getAttribute('data-start-time');
+    const attendeeEmails = item.getAttribute('data-attendee-emails') || '';
+
+    const modal = document.getElementById('createMeetingModal');
+    if (!modal) return;
+
+    const form = document.getElementById('meetingForm') || modal.querySelector('form');
+    if (form) {
+      form.action = '${pageContext.request.contextPath}/meetings/update';
+    }
+
+    const titleText = document.getElementById('modalTitleText') || modal.querySelector('.modal-title-text');
+    if (titleText) titleText.innerText = '✏️ 会議情報を編集';
+
+    let hiddenId = document.getElementById('modalMeetingId');
+    if (!hiddenId && form) {
+      hiddenId = document.createElement('input');
+      hiddenId.type = 'hidden';
+      hiddenId.name = 'meetingId';
+      hiddenId.id = 'modalMeetingId';
+      form.appendChild(hiddenId);
+    }
+    if (hiddenId) hiddenId.value = meetingId;
+
+    const titleInput = document.getElementById('meetingTitleInput') || modal.querySelector('[name="title"]');
+    if (titleInput) titleInput.value = title || '';
+
+    const timeInput = document.getElementById('meetingStartTimeInput') || modal.querySelector('[name="startTime"]');
+    if (timeInput && startTime) {
+      timeInput.value = startTime.length >= 16 ? startTime.substring(0, 16) : startTime;
+    }
+
+    const emailInput = document.getElementById('invitedMembersTextarea') || modal.querySelector('[name="attendeeEmails"]');
+    if (emailInput) emailInput.value = attendeeEmails;
+
+    const emailList = attendeeEmails.split(',').map(e => e.trim().toLowerCase()).filter(e => e !== '');
+
+    // 招待グループの自動判定・選択
+    const groupSelect = document.getElementById('groupSelect');
+    if (groupSelect && groupSelect.options.length > 1) {
+      let matchedGroupId = "";
+
+      for (let i = 1; i < groupSelect.options.length; i++) {
+        const option = groupSelect.options[i];
+        const groupMembersAttr = option.getAttribute('data-members') || '';
+        const groupMembers = groupMembersAttr.split(',').map(e => e.trim().toLowerCase()).filter(e => e !== '');
+
+        if (groupMembers.length > 0 && groupMembers.every(gm => emailList.includes(gm))) {
+          matchedGroupId = option.value;
+          break;
+        }
+      }
+
+      groupSelect.value = matchedGroupId;
+      if (typeof updateGroupMembers === 'function') {
+        updateGroupMembers();
+      }
+    }
+
+    // 個別選択のチェックボックス状態をセット
+    const checkboxes = modal.querySelectorAll('.member-checkbox');
+    checkboxes.forEach(cb => {
+      const cbEmail = cb.value.trim().toLowerCase();
+      if (!cb.disabled) {
+        cb.checked = emailList.includes(cbEmail);
+      }
+    });
+
+    modal.style.display = 'flex';
+  }
+
+  // 3. 削除処理
+  function deleteMeeting(evt, btnElem) {
+    if (evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+    }
+
+    const item = btnElem.closest('.meeting-item');
+    if (!item) return;
+
+    const meetingId = item.getAttribute('data-meeting-id');
+    const title = item.getAttribute('data-title');
+
+    if (!confirm('「' + title + '」を削除しますか？\n（※Googleカレンダーの予定も削除されます）')) {
+      return;
+    }
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '${pageContext.request.contextPath}/meetings/delete';
+
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'meetingId';
+    input.value = meetingId;
+
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+  }
 
   function initMonthFilterOptions() {
     const selectElem = document.getElementById('monthFilterSelect');

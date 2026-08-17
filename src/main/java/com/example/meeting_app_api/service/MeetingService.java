@@ -15,4 +15,8 @@ public interface MeetingService {
     Map<String, Object> analyzeTranscript(Long meetingId, String transcript, String personaType);
     void saveSummaryAndTasks(Long meetingId, String aiSummary, String taskTitle, String taskAssignee, String taskDueDate);
     Integer createMeeting(Meeting meeting);
+
+    void updateMeeting(Meeting meeting);
+    void deleteMeeting(Integer meetingId);
+    Meeting getMeetingById(Integer meetingId);
 }

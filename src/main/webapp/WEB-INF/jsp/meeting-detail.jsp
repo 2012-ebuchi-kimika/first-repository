@@ -55,6 +55,15 @@
               </option>
             </c:forEach>
           </select>
+
+          <!-- ★ 追加：選択中会議の参加者一覧表示カード -->
+          <c:forEach var="m" items="${meetings}">
+            <c:if test="${m.meetingId == selectedMeetingId || m.meetingId == param.id}">
+              <div style="margin-top: 6px; font-size: 8.5pt; color: #334155; background: #f0f9ff; padding: 6px 10px; border-radius: 6px; border: 1px solid #bae6fd; word-break: break-all;">
+                👥 <b style="color: #0369a1;">参加者:</b> <c:out value="${empty m.attendeeEmails ? '未設定' : m.attendeeEmails}"/>
+              </div>
+            </c:if>
+          </c:forEach>
         </div>
 
         <!-- 2. 文字起こしテキスト (ドラッグ＆ドロップ対応) -->
@@ -350,14 +359,12 @@
     return false;
   }
 
-  // ★【機能拡張】ファイル (.txt, .md, .docx) のドラッグ＆ドロップ読み込み処理
   document.addEventListener('DOMContentLoaded', function() {
     const textarea = document.getElementById('transcriptInput');
     const dragHelpText = document.getElementById('dragHelpText');
 
     if (!textarea) return;
 
-    // 1. ドラッグ領域に入ったとき・上にあるとき（枠線と背景色をハイライト）
     ['dragenter', 'dragover'].forEach(eventName => {
       textarea.addEventListener(eventName, function(e) {
         e.preventDefault();
@@ -368,7 +375,6 @@
       }, false);
     });
 
-    // 2. ドラッグ領域から外れたとき・キャンセル時（スタイル復元）
     ['dragleave', 'drop'].forEach(eventName => {
       textarea.addEventListener(eventName, function(e) {
         e.preventDefault();
@@ -379,7 +385,6 @@
       }, false);
     });
 
-    // 3. ドロップ時のファイル読み込み (FileReader + mammoth.js)
     textarea.addEventListener('drop', function(e) {
       const dt = e.dataTransfer;
       const files = dt.files;
@@ -388,14 +393,12 @@
         const file = files[0];
         const fileName = file.name.toLowerCase();
 
-        // A. Wordファイル (.docx) の場合
         if (fileName.endsWith('.docx')) {
           const reader = new FileReader();
 
           reader.onload = function(loadEvent) {
             const arrayBuffer = loadEvent.target.result;
 
-            // mammoth.js で .docx から生テキストを抽出
             mammoth.extractRawText({ arrayBuffer: arrayBuffer })
               .then(function(result) {
                 insertTextToArea(result.value);
@@ -408,7 +411,6 @@
 
           reader.readAsArrayBuffer(file);
 
-        // B. テキストファイル (.txt, .md など) の場合
         } else if (file.type.startsWith('text/') || fileName.endsWith('.txt') || fileName.endsWith('.md')) {
           const reader = new FileReader();
 
@@ -418,14 +420,12 @@
 
           reader.readAsText(file, 'UTF-8');
 
-        // C. 対象外のファイル形式
         } else {
           alert('⚠️ 読み込めるのは .txt, .md, .docx ファイルのみです。');
         }
       }
     }, false);
 
-    // テキストエリアへの挿入共通関数
     function insertTextToArea(text) {
       if (textarea.value.trim() === '') {
         textarea.value = text;

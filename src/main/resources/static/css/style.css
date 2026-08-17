@@ -425,7 +425,7 @@ html, body {
 
 
 /* ==========================================================================
-   7. ツールチップ（「ℹ️」アイコンのポップアップ説明吹き出し）
+   7. ツールチップ（「ℹ️」アイコンおよび参加者ホバーのポップアップ吹き出し）
    ========================================================================== */
 
 /* ツールチップ要素全体を囲むコンテナ */
@@ -480,6 +480,47 @@ html, body {
 .tooltip-container:hover .tooltip-content {
     visibility: visible;
     opacity: 1;
+}
+
+/* 👥 会議参加者ホバーツールチップ用スタイル（完全非表示 ➔ ホバー時のみブロック表示） */
+.attendee-tooltip-container {
+    position: relative;
+    display: inline-block;
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+/* 通常時は完全に表示消去 */
+.attendee-tooltip-container .tooltip-text {
+    display: none;
+    position: absolute;
+    bottom: 125%;
+    left: 0;
+    z-index: 1000;
+    width: max-content;
+    max-width: 350px;
+    padding: 8px 12px;
+    background-color: #1e293b;
+    color: #ffffff;
+    font-size: 8pt;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    white-space: normal;
+    word-break: break-all;
+    pointer-events: none;
+}
+
+/* ホバー時のみ見切れ解除 ＋ ブロック表示 */
+.attendee-tooltip-container:hover {
+    overflow: visible;
+}
+
+.attendee-tooltip-container:hover .tooltip-text {
+    display: block;
 }
 
 

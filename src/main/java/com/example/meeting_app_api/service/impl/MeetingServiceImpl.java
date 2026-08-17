@@ -42,9 +42,10 @@ public class MeetingServiceImpl implements MeetingService {
 
     @Override
     public String getSavedAiSummary(Long meetingId, List<Meeting> meetings) {
-        if (meetingId == null) return null;
+        if (meetingId == null || meetings == null) return null;
         return meetings.stream()
-                .filter(m -> m.getMeetingId() != null && m.getMeetingId().longValue() == meetingId)
+                .filter(m -> m != null && m.getMeetingId() != null && m.getMeetingId().longValue() == meetingId.longValue())
+                .filter(m -> m.getAiSummary() != null && !m.getAiSummary().trim().isEmpty())
                 .map(Meeting::getAiSummary)
                 .findFirst()
                 .orElse(null);
@@ -64,7 +65,7 @@ public class MeetingServiceImpl implements MeetingService {
         if (meetingId != null) {
             List<Meeting> meetings = meetingMapper.findAll(null, true);
             Meeting meeting = meetings.stream()
-                    .filter(m -> m.getMeetingId() != null && m.getMeetingId().longValue() == meetingId)
+                    .filter(m -> m != null && m.getMeetingId() != null && m.getMeetingId().longValue() == meetingId.longValue())
                     .findFirst()
                     .orElse(null);
 
@@ -109,5 +110,23 @@ public class MeetingServiceImpl implements MeetingService {
         }
         meetingMapper.insert(meeting);
         return meeting.getMeetingId();
+    }
+
+    // ★ 追加：編集・更新処理
+    @Override
+    public void updateMeeting(Meeting meeting) {
+        meetingMapper.update(meeting);
+    }
+
+    // ★ 追加：削除処理
+    @Override
+    public void deleteMeeting(Integer meetingId) {
+        meetingMapper.deleteById(meetingId);
+    }
+
+    // ★ 追加：ID指定による1件取得
+    @Override
+    public Meeting getMeetingById(Integer meetingId) {
+        return meetingMapper.findById(meetingId);
     }
 }
