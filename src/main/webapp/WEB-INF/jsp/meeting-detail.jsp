@@ -6,6 +6,8 @@
   <meta charset="UTF-8">
   <title>📝 議事録投稿 ＆ AI解析 - AI Smart Meeting System</title>
   <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=2">
+  <!-- .docx 解析用ライブラリ mammoth.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
 <body style="background-color: #f1f5f9; margin: 0;">
 
@@ -55,11 +57,16 @@
           </select>
         </div>
 
-        <!-- 2. 文字起こしテキスト -->
+        <!-- 2. 文字起こしテキスト (ドラッグ＆ドロップ対応) -->
         <div class="sc03-form-group-flex">
-          <label class="sc03-label">文字起こしテキスト <span style="color: #ef4444;">*</span></label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="sc03-label" style="margin-bottom: 0;">文字起こしテキスト <span style="color: #ef4444;">*</span></label>
+            <span id="dragHelpText" style="font-size: 7.5pt; color: #0284c7; font-weight: bold;">
+              💡 ファイル (.txt, .md, .docx) をドロップして読み込めます
+            </span>
+          </div>
           <textarea name="transcript" id="transcriptInput" class="sc03-textarea"
-                    placeholder="会議の文字起こしテキストを貼り付けてください...&#10;例：&#10;田中: 本日のアジェンダは待機学習の進捗についてです。&#10;佐藤: Day 3のDB設計は完了しました。&#10;田中: 了解です。では次回までにFastAPIの基盤作成をお願いします。（担当: sato@company.com、期限: 8/20）" 
+                    placeholder="会議の文字起こしテキストを貼り付けるか、テキスト・Wordファイル(.docx)をここにドロップしてください...&#10;例：&#10;田中: 本日のアジェンダは待機学習の進捗についてです。&#10;佐藤: Day 3のDB設計は完了しました。" 
                     required data-testid="transcript-input"></textarea>
         </div>
 
@@ -342,6 +349,95 @@
 
     return false;
   }
+
+  // ★【機能拡張】ファイル (.txt, .md, .docx) のドラッグ＆ドロップ読み込み処理
+  document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.getElementById('transcriptInput');
+    const dragHelpText = document.getElementById('dragHelpText');
+
+    if (!textarea) return;
+
+    // 1. ドラッグ領域に入ったとき・上にあるとき（枠線と背景色をハイライト）
+    ['dragenter', 'dragover'].forEach(eventName => {
+      textarea.addEventListener(eventName, function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        textarea.style.borderColor = '#0284c7';
+        textarea.style.backgroundColor = '#f0f9ff';
+        if (dragHelpText) dragHelpText.innerText = '📂 ここにドロップしてテキストを読み込み';
+      }, false);
+    });
+
+    // 2. ドラッグ領域から外れたとき・キャンセル時（スタイル復元）
+    ['dragleave', 'drop'].forEach(eventName => {
+      textarea.addEventListener(eventName, function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        textarea.style.borderColor = '#cbd5e1';
+        textarea.style.backgroundColor = '#ffffff';
+        if (dragHelpText) dragHelpText.innerText = '💡 ファイル (.txt, .md, .docx) をドロップして読み込めます';
+      }, false);
+    });
+
+    // 3. ドロップ時のファイル読み込み (FileReader + mammoth.js)
+    textarea.addEventListener('drop', function(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+
+      if (files && files.length > 0) {
+        const file = files[0];
+        const fileName = file.name.toLowerCase();
+
+        // A. Wordファイル (.docx) の場合
+        if (fileName.endsWith('.docx')) {
+          const reader = new FileReader();
+
+          reader.onload = function(loadEvent) {
+            const arrayBuffer = loadEvent.target.result;
+
+            // mammoth.js で .docx から生テキストを抽出
+            mammoth.extractRawText({ arrayBuffer: arrayBuffer })
+              .then(function(result) {
+                insertTextToArea(result.value);
+              })
+              .catch(function(err) {
+                console.error(err);
+                alert('⚠️ .docx ファイルの解析に失敗しました。');
+              });
+          };
+
+          reader.readAsArrayBuffer(file);
+
+        // B. テキストファイル (.txt, .md など) の場合
+        } else if (file.type.startsWith('text/') || fileName.endsWith('.txt') || fileName.endsWith('.md')) {
+          const reader = new FileReader();
+
+          reader.onload = function(loadEvent) {
+            insertTextToArea(loadEvent.target.result);
+          };
+
+          reader.readAsText(file, 'UTF-8');
+
+        // C. 対象外のファイル形式
+        } else {
+          alert('⚠️ 読み込めるのは .txt, .md, .docx ファイルのみです。');
+        }
+      }
+    }, false);
+
+    // テキストエリアへの挿入共通関数
+    function insertTextToArea(text) {
+      if (textarea.value.trim() === '') {
+        textarea.value = text;
+      } else {
+        if (confirm('現在の入力内容をドロップしたファイルの内容で上書きしますか？\n（「キャンセル」を押すと既存テキストの末尾に追記されます）')) {
+          textarea.value = text;
+        } else {
+          textarea.value += '\n\n' + text;
+        }
+      }
+    }
+  });
 </script>
 
 </body>
