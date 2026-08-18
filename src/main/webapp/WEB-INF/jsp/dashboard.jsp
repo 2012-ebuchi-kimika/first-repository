@@ -40,7 +40,8 @@
           </div>
 
           <button type="button" class="btn-secondary btn-secondary-slim" onclick="filterDashboardAll()">検索</button>
-          <button type="button" class="btn-secondary btn-clear-slim" onclick="clearDashboardSearch()">クリア</button>
+          <!-- 上部クリアボタン：テキストエリアのみを対象にクリア -->
+          <button type="button" class="btn-secondary btn-clear-slim" onclick="clearKeywordSearch()">クリア</button>
         </div>
       </div>
     </div>
@@ -198,8 +199,9 @@
               </select>
             </div>
 
-            <div class="filter-grid-row2">
-              <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
+            <!-- ★ レイアウト＆サイズ調整：並び替え ➔ 完了済みも表示 ➔ クリア（サイズ・高さを完全に統一） -->
+            <div class="filter-grid-row2" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 6px;">
                 <span class="filter-label">並び替え:</span>
                 <select id="taskSortSelect" class="task-filter-select task-sort-select" onchange="sortAndFilterTasks()">
                   <option value="dueDate">📅 期限が近い順</option>
@@ -208,10 +210,16 @@
                 </select>
               </div>
 
-              <label class="completed-toggle">
-                <input type="checkbox" id="showCompletedCheck" onchange="filterDashboardAll()" style="cursor: pointer; accent-color: #0284c7;">
-                <span>完了済みも表示</span>
-              </label>
+              <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+                <label class="completed-toggle" style="margin: 0; white-space: nowrap;">
+                  <input type="checkbox" id="showCompletedCheck" onchange="filterDashboardAll()" style="cursor: pointer; accent-color: #0284c7;">
+                  <span>完了済みも表示</span>
+                </label>
+                <!-- ★ ボタンの高さを 28px に揃え、セレクトボックス・チェックボックス枠とバッチリ高さを統一 -->
+                <button type="button" class="btn-secondary btn-clear-slim" 
+                        style="height: 28px; padding: 0 10px; font-size: 8.5pt; line-height: 1; white-space: nowrap; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;" 
+                        onclick="clearTaskFilters()">クリア</button>
+              </div>
             </div>
           </div>
 
@@ -293,7 +301,7 @@
     if (event.target === groupModal && typeof closeGroupModal === 'function') closeGroupModal();
   };
 
-  // ★ 1. 新規作成ボタンから呼び出す（確実にリセット関数を通す）
+  // 1. 新規作成ボタン
   function openCreateModal() {
     if (typeof resetMeetingModal === 'function') {
       resetMeetingModal();
@@ -313,7 +321,6 @@
       evt.preventDefault();
     }
 
-    // 開く前にまずクリア
     if (typeof resetMeetingModal === 'function') {
       resetMeetingModal();
     }
@@ -360,7 +367,6 @@
 
     const emailList = attendeeEmails.split(',').map(e => e.trim().toLowerCase()).filter(e => e !== '');
 
-    // 招待グループの自動判定・選択
     const groupSelect = document.getElementById('groupSelect');
     if (groupSelect && groupSelect.options.length > 1) {
       let matchedGroupId = "";
@@ -382,7 +388,6 @@
       }
     }
 
-    // 個別選択のチェックボックス状態をセット
     const checkboxes = modal.querySelectorAll('.member-checkbox');
     checkboxes.forEach(cb => {
       const cbEmail = cb.value.trim().toLowerCase();
@@ -578,16 +583,19 @@
     saveFilterState();
   }
 
-  function clearDashboardSearch() {
+  // 上部検索エリアのクリア（キーワードのみ）
+  function clearKeywordSearch() {
     document.getElementById('searchInput').value = '';
-    document.getElementById('monthFilterSelect').value = '';
+    filterDashboardAll();
+  }
+
+  // タスクエリアのクリア（絞り込み条件のみ）
+  function clearTaskFilters() {
     document.getElementById('taskStatusFilter').value = '';
     document.getElementById('taskAssigneeFilter').value = '';
     document.getElementById('taskUrgencyFilter').value = '';
     document.getElementById('taskSortSelect').value = 'dueDate';
     document.getElementById('showCompletedCheck').checked = false;
-    
-    sessionStorage.removeItem('dashboardFilterState');
     filterDashboardAll();
   }
 
