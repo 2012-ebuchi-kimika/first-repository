@@ -6,18 +6,15 @@
   <meta charset="UTF-8">
   <title>📝 議事録投稿 ＆ AI解析 - AI Smart Meeting System</title>
   <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=2">
-  <!-- .docx 解析用ライブラリ mammoth.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
 <body style="background-color: #f1f5f9; margin: 0;">
 
-<!-- ヘッダー -->
 <div class="navbar">
   <div class="brand-logo">⚡ AI Smart Meeting System</div>
   <div>trainee1405@company.com <span class="user-badge">管理者</span></div>
 </div>
 
-<!-- 担当者リアルタイム候補用データリスト -->
 <datalist id="assigneeCandidates">
   <option value="伊藤 (ito@company.com)"></option>
   <option value="山本 (yamamoto@company.com)"></option>
@@ -28,23 +25,20 @@
 </datalist>
 
 <div class="sc03-wrapper">
-  <!-- 戻るナビゲーション -->
   <div class="sc03-nav-back">
-    <a href="${pageContext.request.contextPath}/dashboard" class="sc03-nav-back-link">
+    <a href="${pageContext.request.contextPath}/dashboard" id="btn-back-to-dashboard" class="sc03-nav-back-link">
       ↩️ ダッシュボードへ戻る
     </a>
   </div>
 
   <div class="sc03-grid">
     
-    <!-- 【左カラム】入力・AI設定エリア -->
     <div class="sc03-card">
       <h2 class="sc03-card-title">
         📝 議事録入力 ＆ AI解析指示
       </h2>
 
       <form action="${pageContext.request.contextPath}/meetings/analyze" method="POST" onsubmit="return handleAiAnalyze(event)" class="sc03-form">
-        <!-- 1. 会議選択 -->
         <div class="sc03-form-group">
           <label class="sc03-label">対象の会議 <span style="color: #ef4444;">*</span></label>
           <select name="meetingId" id="meetingSelect" class="form-select" required data-testid="meeting-select" onchange="location.href='${pageContext.request.contextPath}/meetings/detail?id=' + this.value;">
@@ -56,7 +50,6 @@
             </c:forEach>
           </select>
 
-          <!-- ★ 追加：選択中会議の参加者一覧表示カード -->
           <c:forEach var="m" items="${meetings}">
             <c:if test="${m.meetingId == selectedMeetingId || m.meetingId == param.id}">
               <div style="margin-top: 6px; font-size: 8.5pt; color: #334155; background: #f0f9ff; padding: 6px 10px; border-radius: 6px; border: 1px solid #bae6fd; word-break: break-all;">
@@ -66,7 +59,6 @@
           </c:forEach>
         </div>
 
-        <!-- 2. 文字起こしテキスト (ドラッグ＆ドロップ対応) -->
         <div class="sc03-form-group-flex">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
             <label class="sc03-label" style="margin-bottom: 0;">文字起こしテキスト <span style="color: #ef4444;">*</span></label>
@@ -75,11 +67,10 @@
             </span>
           </div>
           <textarea name="transcript" id="transcriptInput" class="sc03-textarea"
-                    placeholder="会議の文字起こしテキストを貼り付けるか、テキスト・Wordファイル(.docx)をここにドロップしてください...&#10;例：&#10;田中: 本日のアジェンダは待機学習の進捗についてです。&#10;佐藤: Day 3のDB設計は完了しました。" 
+                    placeholder="会議の文字起こしテキストを貼り付けるか..." 
                     required data-testid="transcript-input"></textarea>
         </div>
 
-        <!-- 3. ペルソナ設定 -->
         <div class="sc03-form-group">
           <label class="sc03-label">要約トーン (ペルソナ設定)</label>
           <select name="personaType" id="personaSelect" class="form-select" data-testid="persona-select">
@@ -90,36 +81,29 @@
           </select>
         </div>
 
-        <!-- AI実行ボタン -->
         <button type="submit" id="aiBtn" class="btn-primary sc03-btn-ai" data-testid="ai-summary-btn">
           ✨ Gemini APIで要約・タスクを抽出する
         </button>
       </form>
     </div>
 
-    <!-- 【右カラム】AI解析結果 ＆ 既存タスクエリア -->
     <div class="sc03-card">
       <h2 class="sc03-card-title">
         📊 会議情報 ＆ AI解析結果
       </h2>
 
-      <!-- 右側全体のコンテナ -->
       <div class="sc03-right-container">
         
-        <!-- ① 上部：AI解析エリア -->
         <div class="sc03-ai-box">
           
-          <!-- AI未実行時の表示 -->
           <div id="emptyPreview" class="sc03-empty-state" style="display: ${empty savedAiSummary ? 'flex' : 'none'};">
             <div style="font-size: 20pt; margin-bottom: 4px;">🤖</div>
             <div style="font-weight: bold; font-size: 9pt; color: #475569;">AI要約は未生成です</div>
             <div style="font-size: 8pt; margin-top: 2px; color: #64748b;">「Gemini APIで要約・タスクを抽出する」を実行すると結果が表示されます。</div>
           </div>
 
-          <!-- AI実行後 / 保存済み要約表示エリア -->
           <div id="resultPreviewArea" class="sc03-result-area" style="display: ${not empty savedAiSummary ? 'flex' : 'none'};">
             
-            <!-- AI要約カード -->
             <div class="sc03-summary-card">
               <label id="summaryCardLabel" class="sc03-summary-label">
                 【✨ ${not empty savedAiSummary ? '保存済みのAI要約（編集可能）' : '生成されたAI要約（編集可能）'}】
@@ -129,18 +113,16 @@
                         oninput="syncSummaryToHidden(this.value)"><c:out value="${savedAiSummary}"/></textarea>
             </div>
 
-            <!-- 今回検出された複数タスク編集カード -->
             <div id="newTasksContainer" class="sc03-tasks-container">
               <div class="sc03-tasks-header">
                 <label style="font-size: 8.5pt; font-weight: bold; color: #15803d;">【🆕 検出タスクの事前編集・確認】</label>
-                <button type="button" onclick="addTaskRow('', '', '')" class="sc03-btn-add-task">
+                <button type="button" id="btn-add-task-row" onclick="addTaskRow('', '', '')" class="sc03-btn-add-task">
                   ＋ タスク追加
                 </button>
               </div>
               <div id="taskRowsList" class="sc03-tasks-list"></div>
             </div>
 
-            <!-- DB保存フォーム -->
             <form action="${pageContext.request.contextPath}/meetings/save-summary" method="POST" id="saveSummaryForm" style="margin-top: 2px;">
               <input type="hidden" name="meetingId" id="saveMeetingId" value="<c:out value='${selectedMeetingId}'/>">
               <input type="hidden" name="aiSummary" id="saveAiSummary" value="<c:out value='${savedAiSummary}'/>">
@@ -155,7 +137,6 @@
           </div>
         </div>
 
-        <!-- ② 下部：この会議の登録済みタスクエリア -->
         <div class="sc03-registered-tasks-box">
           <div class="sc03-registered-tasks-header">
             <span>📌 この会議の登録済みタスク</span>
@@ -224,7 +205,6 @@
     rowDiv.id = rowId;
     rowDiv.className = 'task-input-row';
     rowDiv.style.cssText = 'display: flex; gap: 4px; align-items: center; background: #ffffff; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px;';
-
     rowDiv.innerHTML = `
       <input type="text" class="form-input row-task-title" value="\${escapeHtml(cleanTitle)}" placeholder="タスク内容" style="flex: 2; height: 32px; font-size: 8.5pt; padding: 0 8px; min-width: 0;">
       <input type="text" class="form-input row-task-assignee" list="assigneeCandidates" value="\${escapeHtml(cleanAssignee)}" placeholder="担当者 (検索/選択)" style="flex: 1; height: 32px; font-size: 8.5pt; padding: 0 8px; min-width: 0;">
@@ -355,7 +335,6 @@
       btn.innerText = '✨ Gemini APIで要約・タスクを抽出する';
       btn.disabled = false;
     });
-
     return false;
   }
 
@@ -395,10 +374,8 @@
 
         if (fileName.endsWith('.docx')) {
           const reader = new FileReader();
-
           reader.onload = function(loadEvent) {
             const arrayBuffer = loadEvent.target.result;
-
             mammoth.extractRawText({ arrayBuffer: arrayBuffer })
               .then(function(result) {
                 insertTextToArea(result.value);
@@ -408,18 +385,13 @@
                 alert('⚠️ .docx ファイルの解析に失敗しました。');
               });
           };
-
           reader.readAsArrayBuffer(file);
-
         } else if (file.type.startsWith('text/') || fileName.endsWith('.txt') || fileName.endsWith('.md')) {
           const reader = new FileReader();
-
           reader.onload = function(loadEvent) {
             insertTextToArea(loadEvent.target.result);
           };
-
           reader.readAsText(file, 'UTF-8');
-
         } else {
           alert('⚠️ 読み込めるのは .txt, .md, .docx ファイルのみです。');
         }

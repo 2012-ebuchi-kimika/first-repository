@@ -1,25 +1,20 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
-<!-- ① 新規会議作成モーダル (SCR-02) -->
 <div id="createMeetingModal" class="modal-overlay">
   <div class="modal-content modal-content-large">
     
-    <!-- ヘッダー -->
     <div class="modal-header modal-header-large">
       <span class="modal-title-text" id="modalTitleText">📅 新規会議を作成</span>
-      <button type="button" class="modal-close-btn" onclick="closeModal()">&times;</button>
+      <button type="button" id="btn-close-meeting-modal" class="modal-close-btn" onclick="closeModal()">&times;</button>
     </div>
     
     <form action="${pageContext.request.contextPath}/meetings/create" id="meetingForm" method="POST" class="modal-body-form">
       
-      <!-- 左右2カラムグリッド -->
       <div class="modal-body-grid">
         
-        <!-- 【左カラム】：基本情報 -->
         <div class="modal-column">
           
-          <!-- 1. 会議タイトルブロック -->
           <div class="form-group modal-form-block">
             <label class="form-label modal-label-bold">
               会議タイトル <span style="color: #ef4444;">*</span>
@@ -27,7 +22,6 @@
             <input type="text" name="title" id="meetingTitleInput" class="form-input modal-input-full" placeholder="例：週次進捗確認ミーティング" required data-testid="meeting-title-input">
           </div>
           
-          <!-- 2. 開催日時ブロック -->
           <div class="form-group modal-form-block">
             <label class="form-label modal-label-bold">
               開催日時 <span style="color: #ef4444;">*</span>
@@ -35,7 +29,6 @@
             <input type="datetime-local" name="startTime" id="meetingStartTimeInput" class="form-input modal-input-full" required data-testid="meeting-datetime-input" style="font-family: inherit;">
           </div>
 
-          <!-- 3. 招待グループ選択ブロック -->
           <div class="form-group modal-form-block-flex">
             <label class="form-label modal-label-bold">
               招待グループ <span style="font-size: 8pt; color: #64748b; font-weight: normal;">(任意)</span>
@@ -51,7 +44,6 @@
               </c:forEach>
             </select>
             
-            <!-- 👥 選択グループのメンバー一覧表示（初期は非表示） -->
             <div id="memberListDisplay" class="modal-members-display" style="display: none;">
               👥 <b>グループメンバー:</b> <span id="memberNames"></span>
             </div>
@@ -59,21 +51,17 @@
 
         </div>
 
-        <!-- 【右カラム】：個別参加メンバー選択 ＋ Google Meet URL自動発行 -->
         <div class="modal-column-flex">
           
-          <!-- 1. 個別参加メンバー追加ブロック -->
           <div class="form-group modal-form-block-flex">
             <label class="form-label" style="margin-bottom: 8px; font-weight: bold; font-size: 9.5pt; color: #334155;">
               👤 個別参加メンバー追加
             </label>
             
-            <!-- リアルタイム検索窓 -->
             <div style="margin-bottom: 10px;">
               <input type="text" id="memberSearchInput" class="form-input modal-search-input" placeholder="🔍 名前・メールで絞り込み..." oninput="filterMemberList()">
             </div>
 
-            <!-- メンバーチェックボックスエリア -->
             <div id="memberListContainer" class="modal-checkbox-list">
               <c:choose>
                 <c:when test="${empty users}">
@@ -93,14 +81,12 @@
               </c:choose>
             </div>
 
-            <!-- 参加予定全メンバー一覧 -->
             <label class="form-label" style="font-size: 8pt; color: #475569; margin-bottom: 4px; font-weight: bold;">参加予定全メンバー一覧 (カンマ区切り):</label>
             <textarea name="attendeeEmails" id="invitedMembersTextarea" class="form-input modal-textarea-full" placeholder="グループメンバーおよび選択した個人が自動入力されます"></textarea>
           </div>
 
-          <!-- 2. Google Meet URL 自動発行ブロック -->
           <div class="form-group modal-form-block">
-            <button type="button" class="btn-secondary modal-btn-meet" data-testid="meet-create-btn" onclick="generateMeetUrl()">
+            <button type="button" id="btn-generate-meet-url" class="btn-secondary modal-btn-meet" data-testid="meet-create-btn" onclick="generateMeetUrl()">
               Google Meet URL を自動発行して送信
             </button>
             <div style="font-size: 8.5pt; color: #475569;">
@@ -114,58 +100,49 @@
 
       </div>
       
-      <!-- フッターボタンエリア -->
       <div class="modal-footer modal-footer-flex">
-        <button type="button" class="btn-secondary modal-btn-cancel" onclick="closeModal()">キャンセル</button>
-        <button type="submit" name="actionType" value="saveOnly" class="btn-secondary modal-btn-save">保存</button>
-        <button type="submit" name="actionType" value="goToDetail" class="btn-primary modal-btn-primary-action">保存して要約作成へ</button>
+        <button type="button" id="btn-cancel-meeting" class="btn-secondary modal-btn-cancel" onclick="closeModal()">キャンセル</button>
+        <button type="submit" id="btn-save-meeting" name="actionType" value="saveOnly" class="btn-secondary modal-btn-save">保存</button>
+        <button type="submit" id="btn-save-go-detail" name="actionType" value="goToDetail" class="btn-primary modal-btn-primary-action">保存して要約作成へ</button>
       </div>
     </form>
   </div>
 </div>
 
 <script>
-  // ★ モーダルの完全クリア・初期化関数
   function resetMeetingModal() {
     const modal = document.getElementById('createMeetingModal');
     if (!modal) return;
 
-    // 1. フォーム値リセット
     const form = document.getElementById('meetingForm');
     if (form) {
       form.reset();
       form.action = '${pageContext.request.contextPath}/meetings/create';
     }
 
-    // 2. タイトルとhidden IDのクリア
     const titleText = document.getElementById('modalTitleText');
     if (titleText) titleText.innerText = '📅 新規会議を作成';
 
     const hiddenId = document.getElementById('modalMeetingId');
     if (hiddenId) hiddenId.remove();
 
-    // 3. グループ選択セレクトボックスのクリア
     const groupSel = document.getElementById('groupSelect');
     if (groupSel) groupSel.value = '';
 
-    // 4. グループ表示枠の完全非表示
     const displayArea = document.getElementById('memberListDisplay');
     if (displayArea) displayArea.style.display = 'none';
 
     const namesElem = document.getElementById('memberNames');
     if (namesElem) namesElem.innerText = '';
 
-    // 5. チェックボックス・disabled・赤文字バッジの全クリア
     document.querySelectorAll('.member-checkbox').forEach(cb => {
       cb.checked = false;
       cb.disabled = false;
     });
-
     document.querySelectorAll('.group-badge').forEach(badge => {
       badge.style.display = 'none';
     });
 
-    // 6. テキストエリア・Meet URLのクリア
     const textarea = document.getElementById('invitedMembersTextarea');
     if (textarea) textarea.value = '';
 
@@ -198,7 +175,6 @@
     const namesElem = document.getElementById('memberNames');
     
     const membersAttr = (selectedOption && selectedOption.value) ? selectedOption.getAttribute('data-members') : '';
-    
     const groupEmails = membersAttr 
       ? membersAttr.split(',').map(e => e.trim().toLowerCase()).filter(e => e !== '') 
       : [];
@@ -225,7 +201,6 @@
         if (badge) badge.style.display = 'none';
       }
     });
-
     syncSelectedMembers();
   }
 
@@ -237,7 +212,6 @@
 
     const checkedBoxes = document.querySelectorAll('.member-checkbox:checked:not(:disabled)');
     const individualEmails = Array.from(checkedBoxes).map(cb => cb.value.trim());
-
     const allEmails = Array.from(new Set([...groupEmails, ...individualEmails]));
     const textarea = document.getElementById('invitedMembersTextarea');
     if (textarea) textarea.value = allEmails.join(', ');
@@ -267,7 +241,6 @@
     
     const displayElem = document.getElementById('meetUrlDisplay');
     const inputElem = document.getElementById('meetUrlInput');
-    
     if (displayElem && inputElem) {
       displayElem.href = generatedUrl;
       displayElem.innerText = generatedUrl;

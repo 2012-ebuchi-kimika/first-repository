@@ -1,23 +1,19 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
-<!-- ② ⚙️ 招待グループ管理モーダル -->
 <div id="groupManagementModal" class="modal-overlay">
   <div class="modal-content group-modal-content">
     
-    <!-- モーダルヘッダー -->
     <div class="modal-header group-modal-header">
       <span class="group-modal-title">⚙️ 招待グループの管理</span>
-      <button type="button" class="modal-close-btn" onclick="closeGroupModal()">&times;</button>
+      <button type="button" id="btn-close-group-modal" class="modal-close-btn" onclick="closeGroupModal()">&times;</button>
     </div>
     
     <form id="groupForm" onsubmit="return handleAddGroup(event)" novalidate class="group-form">
       <input type="hidden" id="editingGroupId" name="groupId" value="">
 
-      <!-- 3カラム（左・中・右）横並びグリッドレイアウト -->
       <div class="group-grid-3col">
         
-        <!-- 【左カラム】：登録済みグループ一覧 -->
         <div class="group-col-box">
           <label class="form-label group-col-title">
             📋 登録済みグループ一覧
@@ -50,7 +46,6 @@
           </div>
         </div>
 
-        <!-- 【中央カラム】：グループ名設定・新規/編集切り替え -->
         <div class="group-col-center">
           <div>
             <div class="group-center-header">
@@ -61,7 +56,7 @@
                 </div>
               </div>
               <div id="resetModeArea" style="display: none; margin-top: 8px;">
-                <button type="button" class="group-reset-btn" onclick="resetGroupForm()">
+                <button type="button" id="btn-reset-group-mode" class="group-reset-btn" onclick="resetGroupForm()">
                   ↩️ 新規作成モードに戻る
                 </button>
               </div>
@@ -80,7 +75,6 @@
           </div>
         </div>
 
-        <!-- 【右カラム】：メンバー選択 -->
         <div class="group-col-box">
           <label class="form-label group-col-title">
             👤 グループメンバー選択
@@ -114,9 +108,8 @@
 
       </div>
       
-      <!-- フッターボタンエリア -->
       <div class="modal-footer group-footer-flex">
-        <button type="button" class="btn-secondary group-btn-close" onclick="closeGroupModal()">閉じる</button>
+        <button type="button" id="btn-close-group-modal-footer" class="btn-secondary group-btn-close" onclick="closeGroupModal()">閉じる</button>
         <button type="submit" id="submitGroupBtn" class="btn-primary group-btn-submit">
           グループを追加保存
         </button>
@@ -222,13 +215,11 @@
       console.error(err);
       alert('保存処理に失敗しました。');
     });
-
     return false;
   }
 
   function deleteGroup(groupId, groupName) {
     if (!confirm('グループ「' + groupName + '」を削除してもよろしいですか？')) return;
-
     fetch('${pageContext.request.contextPath}/api/groups/' + groupId, {
       method: 'DELETE'
     })
@@ -254,7 +245,6 @@
     
     document.getElementById('resetModeArea').style.display = 'block';
     document.getElementById('submitGroupBtn').innerText = '変更を更新保存';
-
     const membersArray = membersStr ? membersStr.split(',').map(m => m.trim()) : [];
     document.querySelectorAll('.group-member-checkbox').forEach(cb => {
       cb.checked = membersArray.includes(cb.value);
@@ -275,7 +265,6 @@
     document.querySelectorAll('.group-member-checkbox').forEach(cb => {
       cb.checked = false;
     });
-
     syncGroupMembers();
   }
 
@@ -288,7 +277,6 @@
   function filterGroupMemberList() {
     const query = document.getElementById('groupMemberSearchInput').value.toLowerCase().trim();
     const items = document.querySelectorAll('.group-member-item-label');
-
     items.forEach(item => {
       const searchText = item.getAttribute('data-search-text').toLowerCase();
       if (searchText.includes(query)) {

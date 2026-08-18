@@ -16,20 +16,18 @@
 
 <div class="app-container">
   
-  <!-- ヘッダーエリア -->
   <div class="navbar navbar-slim">
     <div class="brand-logo">⚡ AI Smart Meeting System</div>
     <div>
       trainee1405@company.com <span class="user-badge">管理者</span>
-      <button type="button" class="btn-secondary" style="margin-left: 10px; padding: 4px 10px; font-size: 8.5pt;" onclick="openGroupModal()">⚙️ グループ管理</button>
+      <button type="button" id="btn-open-group-modal" class="btn-secondary" style="margin-left: 10px; padding: 4px 10px; font-size: 8.5pt;" onclick="openGroupModal()">⚙️ グループ管理</button>
     </div>
   </div>
 
   <div class="main-content">
     
-    <!-- アクションバー -->
     <div class="action-bar action-bar-slim">
-      <button type="button" class="btn-primary btn-primary-slim" onclick="openCreateModal()">＋ 新規会議を作成</button>
+      <button type="button" id="btn-open-create-modal" class="btn-primary btn-primary-slim" onclick="openCreateModal()">＋ 新規会議を作成</button>
       
       <div class="search-container">
         <div class="search-box-group">
@@ -39,17 +37,14 @@
             <div id="validationError" class="error-message"></div>
           </div>
 
-          <button type="button" class="btn-secondary btn-secondary-slim" onclick="filterDashboardAll()">検索</button>
-          <!-- 上部クリアボタン：テキストエリアのみを対象にクリア -->
-          <button type="button" class="btn-secondary btn-clear-slim" onclick="clearKeywordSearch()">クリア</button>
+          <button type="button" id="btn-execute-search" class="btn-secondary btn-secondary-slim" onclick="filterDashboardAll()">検索</button>
+          <button type="button" id="btn-clear-keyword-search" class="btn-secondary btn-clear-slim" onclick="clearKeywordSearch()">クリア</button>
         </div>
       </div>
     </div>
 
-    <!-- 左右2カラムレイアウト -->
     <div class="layout-grid">
       
-      <!-- 左カラム：会議一覧 -->
       <div class="left-col">
         <div class="card">
           <div class="card-header card-header-slim">
@@ -73,20 +68,16 @@
                        data-attendee-emails="<c:out value='${m.attendeeEmails}'/>"
                        onclick="location.href='${pageContext.request.contextPath}/meetings/detail?id=${m.meetingId}'">
                     
-                    <!-- 1行目：タイトル ＆ [編集][削除] ＋ バッジ固定 -->
                     <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px;">
                       
-                      <!-- タイトル領域 -->
                       <div class="meeting-title" 
                            title="<c:out value='${m.title}'/>" 
                            style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0;">
                         <c:out value="${m.title}"/>
                       </div>
 
-                      <!-- 右側操作エリア -->
                       <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
 
-                        <!-- 会議実施状況 -->
                         <c:choose>
                           <c:when test="${m.startTime > currentFormattedDate}">
                             <span class="meeting-badge-future">📅 予定 (未来)</span>
@@ -98,11 +89,13 @@
 
                         <div style="font-size: 8pt; display: flex; gap: 6px;">
                           <button type="button" 
+                                  class="btn-edit-meeting"
                                   style="color: #0284c7; background: none; border: none; cursor: pointer; padding: 0; font-weight: bold; font-size: 8pt;" 
                                   onclick="openEditMeetingModal(event, this)">
                             [編集]
                           </button>
                           <button type="button" 
+                                  class="btn-delete-meeting"
                                   style="color: #ef4444; background: none; border: none; cursor: pointer; padding: 0; font-size: 8pt;" 
                                   onclick="deleteMeeting(event, this)">
                             [削除]
@@ -111,7 +104,6 @@
                       </div>
                     </div>
 
-                    <!-- 2行目：日時 ＋ 参加者 -->
                     <div class="meeting-date" style="display: flex; align-items: center; gap: 6px;">
                       <span style="white-space: nowrap;">🕒 <c:out value="${m.startTime}"/></span>
                       <span>|</span>
@@ -126,7 +118,6 @@
                       </div>
                     </div>
 
-                    <!-- 3行目：AI要約ボックス -->
                     <c:choose>
                       <c:when test="${not empty m.aiSummary}">
                         <div class="ai-summary-box">
@@ -149,10 +140,8 @@
         </div>
       </div>
 
-      <!-- 右カラム：タスク一覧 -->
       <div class="right-col">
         <div class="card">
-          <!-- ヘッダー部 -->
           <div class="card-header card-header-slim">
             <div style="display: flex; align-items: center; gap: 6px;">
               <span id="taskHeaderTitle">☑️ 未完了タスク</span>
@@ -174,7 +163,6 @@
             <span style="font-size: 8pt; font-weight: normal; color: #64748b;" id="taskCountLabel">全 <c:out value="${fn:length(tasks)}"/> 件</span>
           </div>
 
-          <!-- フィルターコントロール -->
           <div class="task-filter-panel">
             <div class="filter-grid-row1">
               <span class="filter-label">絞り込み:</span>
@@ -199,7 +187,6 @@
               </select>
             </div>
 
-            <!-- ★ レイアウト＆サイズ調整：並び替え ➔ 完了済みも表示 ➔ クリア（サイズ・高さを完全に統一） -->
             <div class="filter-grid-row2" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
               <div style="display: flex; align-items: center; gap: 6px;">
                 <span class="filter-label">並び替え:</span>
@@ -215,15 +202,13 @@
                   <input type="checkbox" id="showCompletedCheck" onchange="filterDashboardAll()" style="cursor: pointer; accent-color: #0284c7;">
                   <span>完了済みも表示</span>
                 </label>
-                <!-- ★ ボタンの高さを 28px に揃え、セレクトボックス・チェックボックス枠とバッチリ高さを統一 -->
-                <button type="button" class="btn-secondary btn-clear-slim" 
+                <button type="button" id="btn-clear-task-filters" class="btn-secondary btn-clear-slim" 
                         style="height: 28px; padding: 0 10px; font-size: 8.5pt; line-height: 1; white-space: nowrap; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;" 
                         onclick="clearTaskFilters()">クリア</button>
               </div>
             </div>
           </div>
 
-          <!-- スクロールエリア -->
           <div id="taskListArea" class="scrollable-area">
             <c:choose>
               <c:when test="${empty tasks}">
@@ -301,7 +286,6 @@
     if (event.target === groupModal && typeof closeGroupModal === 'function') closeGroupModal();
   };
 
-  // 1. 新規作成ボタン
   function openCreateModal() {
     if (typeof resetMeetingModal === 'function') {
       resetMeetingModal();
@@ -314,7 +298,6 @@
     }
   }
 
-  // 2. 編集モーダルを開く
   function openEditMeetingModal(evt, btnElem) {
     if (evt) {
       evt.stopPropagation();
@@ -335,7 +318,6 @@
 
     const modal = document.getElementById('createMeetingModal');
     if (!modal) return;
-
     const form = document.getElementById('meetingForm') || modal.querySelector('form');
     if (form) {
       form.action = '${pageContext.request.contextPath}/meetings/update';
@@ -364,18 +346,15 @@
 
     const emailInput = document.getElementById('invitedMembersTextarea') || modal.querySelector('[name="attendeeEmails"]');
     if (emailInput) emailInput.value = attendeeEmails;
-
     const emailList = attendeeEmails.split(',').map(e => e.trim().toLowerCase()).filter(e => e !== '');
 
     const groupSelect = document.getElementById('groupSelect');
     if (groupSelect && groupSelect.options.length > 1) {
       let matchedGroupId = "";
-
       for (let i = 1; i < groupSelect.options.length; i++) {
         const option = groupSelect.options[i];
         const groupMembersAttr = option.getAttribute('data-members') || '';
         const groupMembers = groupMembersAttr.split(',').map(e => e.trim().toLowerCase()).filter(e => e !== '');
-
         if (groupMembers.length > 0 && groupMembers.every(gm => emailList.includes(gm))) {
           matchedGroupId = option.value;
           break;
@@ -395,11 +374,9 @@
         cb.checked = emailList.includes(cbEmail);
       }
     });
-
     modal.style.display = 'flex';
   }
 
-  // 3. 削除処理
   function deleteMeeting(evt, btnElem) {
     if (evt) {
       evt.stopPropagation();
@@ -411,7 +388,6 @@
 
     const meetingId = item.getAttribute('data-meeting-id');
     const title = item.getAttribute('data-title');
-
     if (!confirm('「' + title + '」を削除しますか？\n（※Googleカレンダーの予定も削除されます）')) {
       return;
     }
@@ -441,7 +417,6 @@
         monthsSet.add(startTime.substring(0, 7).replace('-', '/'));
       }
     });
-
     Array.from(monthsSet).sort().reverse().forEach(ym => {
       const option = document.createElement('option');
       option.value = ym;
@@ -461,7 +436,6 @@
         assigneesSet.add(assignee);
       }
     });
-
     Array.from(assigneesSet).sort().forEach(a => {
       const option = document.createElement('option');
       option.value = a;
@@ -486,7 +460,6 @@
   function restoreFilterState() {
     const saved = sessionStorage.getItem('dashboardFilterState');
     if (!saved) return;
-
     try {
       const state = JSON.parse(saved);
       if (state.keyword !== undefined) document.getElementById('searchInput').value = state.keyword;
@@ -508,13 +481,13 @@
     
     const query = inputElem ? inputElem.value.toLowerCase().trim() : '';
     const selectedMonth = monthSelect ? monthSelect.value : '';
-
     const statusFilter = document.getElementById('taskStatusFilter').value;
     const assigneeFilter = document.getElementById('taskAssigneeFilter').value;
     const urgencyFilter = document.getElementById('taskUrgencyFilter').value;
     const showCompleted = document.getElementById('showCompletedCheck').checked;
 
-    document.getElementById('taskHeaderTitle').innerText = showCompleted ? '📋 タスク一覧 (全件)' : '☑️ 未完了タスク';
+    document.getElementById('taskHeaderTitle').innerText = showCompleted ?
+      '📋 タスク一覧 (全件)' : '☑️ 未完了タスク';
 
     if (inputElem && inputElem.value.length > 50) {
       inputElem.classList.add('error');
@@ -525,7 +498,6 @@
       errorElem.innerText = '';
     }
 
-    // 1. 会議カード
     document.querySelectorAll('.meeting-item').forEach(card => {
       const text = card.innerText.toLowerCase();
       const startTime = card.getAttribute('data-start-time') || '';
@@ -537,7 +509,6 @@
       card.style.display = (matchesKeyword && matchesMonth) ? 'block' : 'none';
     });
 
-    // 2. タスクカード
     let visibleCount = 0;
     document.querySelectorAll('.task-row').forEach(card => {
       const text = card.innerText.toLowerCase();
@@ -583,13 +554,11 @@
     saveFilterState();
   }
 
-  // 上部検索エリアのクリア（キーワードのみ）
   function clearKeywordSearch() {
     document.getElementById('searchInput').value = '';
     filterDashboardAll();
   }
 
-  // タスクエリアのクリア（絞り込み条件のみ）
   function clearTaskFilters() {
     document.getElementById('taskStatusFilter').value = '';
     document.getElementById('taskAssigneeFilter').value = '';
