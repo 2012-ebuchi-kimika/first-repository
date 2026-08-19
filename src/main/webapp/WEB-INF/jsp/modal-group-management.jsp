@@ -31,8 +31,19 @@
                       <div class="group-card-header">
                         <b class="group-name-text group-card-title">・<c:out value="${g.groupName}"/></b>
                         <div class="group-action-btns">
-                          <button type="button" class="group-btn-edit" onclick="editGroup(${g.groupId}, '<c:out value="${g.groupName}"/>', '<c:out value="${g.members}"/>')">[編集]</button>
-                          <button type="button" class="group-btn-delete" onclick="deleteGroup(${g.groupId}, '<c:out value="${g.groupName}"/>')">[削除]</button>
+                          <!-- data-* 属性で安全に保持 -->
+                          <button type="button" 
+                                  class="group-btn-edit" 
+                                  data-group-id="${g.groupId}" 
+                                  data-group-name="<c:out value='${g.groupName}'/>" 
+                                  data-group-members="<c:out value='${g.members}'/>" 
+                                  onclick="handleEditGroupClick(this)">[編集]</button>
+                          
+                          <button type="button" 
+                                  class="group-btn-delete" 
+                                  data-group-id="${g.groupId}" 
+                                  data-group-name="<c:out value='${g.groupName}'/>" 
+                                  onclick="handleDeleteGroupClick(this)">[削除]</button>
                         </div>
                       </div>
                       <div class="group-members-text">
@@ -190,22 +201,27 @@
         if (existingCard) {
           existingCard.querySelector('.group-name-text').innerText = '・' + savedGroup.groupName;
           existingCard.querySelector('.group-members-text').innerText = savedGroup.members;
+          
+          const editBtn = existingCard.querySelector('.group-btn-edit');
+          if (editBtn) {
+            editBtn.setAttribute('data-group-name', savedGroup.groupName);
+            editBtn.setAttribute('data-group-members', savedGroup.members);
+          }
         }
       } else {
-        const newHtml = `
-          <div class="group-card-item" id="group-card-\${savedGroup.groupId}">
-            <div class="group-card-header">
-              <b class="group-name-text group-card-title">・\${escapeHtml(savedGroup.groupName)}</b>
-              <div class="group-action-btns">
-                <button type="button" class="group-btn-edit" onclick="editGroup(\${savedGroup.groupId}, '\${escapeHtml(savedGroup.groupName)}', '\${escapeHtml(savedGroup.members)}')">[編集]</button>
-                <button type="button" class="group-btn-delete" onclick="deleteGroup(\${savedGroup.groupId}, '\${escapeHtml(savedGroup.groupName)}')">[削除]</button>
-              </div>
-            </div>
-            <div class="group-members-text">
-              \${escapeHtml(savedGroup.members)}
-            </div>
-          </div>
-        `;
+        const newHtml = 
+          '<div class="group-card-item" id="group-card-' + savedGroup.groupId + '">' +
+            '<div class="group-card-header">' +
+              '<b class="group-name-text group-card-title">・' + escapeHtml(savedGroup.groupName) + '</b>' +
+              '<div class="group-action-btns">' +
+                '<button type="button" class="group-btn-edit" data-group-id="' + savedGroup.groupId + '" data-group-name="' + escapeHtml(savedGroup.groupName) + '" data-group-members="' + escapeHtml(savedGroup.members) + '" onclick="handleEditGroupClick(this)">[編集]</button>' +
+                '<button type="button" class="group-btn-delete" data-group-id="' + savedGroup.groupId + '" data-group-name="' + escapeHtml(savedGroup.groupName) + '" onclick="handleDeleteGroupClick(this)">[削除]</button>' +
+              '</div>' +
+            '</div>' +
+            '<div class="group-members-text">' +
+              escapeHtml(savedGroup.members) +
+            '</div>' +
+          '</div>';
         container.insertAdjacentHTML('afterbegin', newHtml);
       }
 
@@ -216,6 +232,21 @@
       alert('保存処理に失敗しました。');
     });
     return false;
+  }
+
+  // data-* 属性から値を安全に取得して編集処理へ
+  function handleEditGroupClick(btn) {
+    const id = btn.getAttribute('data-group-id');
+    const name = btn.getAttribute('data-group-name');
+    const members = btn.getAttribute('data-group-members');
+    editGroup(id, name, members);
+  }
+
+  // data-* 属性から値を安全に取得して削除処理へ
+  function handleDeleteGroupClick(btn) {
+    const id = btn.getAttribute('data-group-id');
+    const name = btn.getAttribute('data-group-name');
+    deleteGroup(id, name);
   }
 
   function deleteGroup(groupId, groupName) {
@@ -287,6 +318,7 @@
     });
   }
 
+  // ★ 修正箇所: JSPエラーを防ぐため正規表現スラッシュ(/)を補正して構文エラーを完全解消
   function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
