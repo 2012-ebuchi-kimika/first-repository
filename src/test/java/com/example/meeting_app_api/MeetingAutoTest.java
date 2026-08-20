@@ -46,71 +46,88 @@ public class MeetingAutoTest {
 
     @Test
     public void runSelectedScenarios() throws Exception {
-        File excelFile = new File("src/test/resources/testdata/meeting_testdata.xlsx");
+        File testDataDir = new File("src/test/resources/testdata");
 
-        if (!excelFile.exists()) {
-            throw new RuntimeException("Excelファイルが見つかりません: " + excelFile.getAbsolutePath());
+        if (!testDataDir.exists() || !testDataDir.isDirectory()) {
+            throw new RuntimeException("テストデータフォルダが見つかりません: " + testDataDir.getAbsolutePath());
         }
 
-        try (FileInputStream fis = new FileInputStream(excelFile);
-                Workbook workbook = new XSSFWorkbook(fis)) {
+        // ★ 案A: testdataフォルダ内の全 .xlsx ファイルを自動取得（Excel一時ファイル ~$ は除外）
+        File[] excelFiles = testDataDir.listFiles((dir, name) -> name.endsWith(".xlsx") && !name.startsWith("~$"));
 
-            DataFormatter formatter = new DataFormatter();
+        if (excelFiles == null || excelFiles.length == 0) {
+            System.out.println("⚠️ 実行対象のExcelファイルが見つかりません: " + testDataDir.getAbsolutePath());
+            return;
+        }
 
-            // 1. 1シート目（TestScenarios）から「実行フラグ = Y」のテストIDを取得
-            Sheet mainSheet = workbook.getSheetAt(0);
-            List<String> targetTestIds = new ArrayList<>();
+        // アプリへ移動
+        System.out.println("🌐 Webアプリを開きます: http://localhost:8080/dashboard");
+        driver.get("http://localhost:8080/dashboard");
 
-            for (int i = 1; i <= mainSheet.getLastRowNum(); i++) {
-                Row row = mainSheet.getRow(i);
-                if (row == null)
+        DataFormatter formatter = new DataFormatter();
+
+        // ★ 取得した全Excelファイルを順次ループ実行
+        for (File excelFile : excelFiles) {
+            System.out.println("\n==========================================");
+            System.out.println("📂 【Excelファイル読込】: " + excelFile.getName());
+            System.out.println("==========================================");
+
+            try (FileInputStream fis = new FileInputStream(excelFile);
+                    Workbook workbook = new XSSFWorkbook(fis)) {
+
+                // 1. 1シート目（TestScenarios）から「実行フラグ = Y」のテストIDを取得
+                Sheet mainSheet = workbook.getSheetAt(0);
+                List<String> targetTestIds = new ArrayList<>();
+
+                for (int i = 1; i <= mainSheet.getLastRowNum(); i++) {
+                    Row row = mainSheet.getRow(i);
+                    if (row == null)
+                        continue;
+
+                    String runFlag = formatter.formatCellValue(row.getCell(1)).trim(); // B列: 実行フラグ
+                    String testId = formatter.formatCellValue(row.getCell(2)).trim(); // C列: テストID
+
+                    if ("Y".equalsIgnoreCase(runFlag) && !testId.isEmpty()) {
+                        targetTestIds.add(testId);
+                    }
+                }
+
+                if (targetTestIds.isEmpty()) {
+                    System.out.println("⚠️ " + excelFile.getName() + " 内に実行対象（実行フラグ=Y）のシナリオがありません。スキップします。");
                     continue;
-
-                String runFlag = formatter.formatCellValue(row.getCell(1)).trim(); // B列: 実行フラグ
-                String testId = formatter.formatCellValue(row.getCell(2)).trim(); // C列: テストID
-
-                if ("Y".equalsIgnoreCase(runFlag) && !testId.isEmpty()) {
-                    targetTestIds.add(testId);
-                }
-            }
-
-            if (targetTestIds.isEmpty()) {
-                System.out.println("⚠️ 実行対象（実行フラグ=Y）のシナリオが1つもありません。");
-                return;
-            }
-
-            // 2. アプリへ移動
-            System.out.println("🌐 Webアプリを開きます: http://localhost:8080/dashboard");
-            driver.get("http://localhost:8080/dashboard");
-
-            // 3. 対象のテストID（シート）を順に実行
-            for (String testId : targetTestIds) {
-                System.out.println("\n==========================================");
-                System.out.println("▶▶ [START] テストケース実行: " + testId);
-                System.out.println("==========================================");
-
-                Sheet detailSheet = workbook.getSheet(testId);
-                if (detailSheet == null) {
-                    System.out.println("⚠️ シートが見つかりません: " + testId);
-                    continue;
                 }
 
-                try {
-                    // Excelの行を1行ずつループ実行する処理
-                    executeSheetSteps(testId, detailSheet, formatter);
+                // 2. 対象のテストID（シート）を順に実行
+                for (String testId : targetTestIds) {
+                    System.out.println("\n------------------------------------------");
+                    System.out.println("▶▶ [START] テストケース実行: " + testId + " (" + excelFile.getName() + ")");
+                    System.out.println("------------------------------------------");
 
-                    // ★ APIログファイルのコピー保存
-                    copyApiLog(testId, "app-api.log");
+                    Sheet detailSheet = workbook.getSheet(testId);
+                    if (detailSheet == null) {
+                        System.out.println("⚠️ シートが見つかりません: " + testId);
+                        continue;
+                    }
 
-                    System.out.println("✅ [SUCCESS] " + testId + " のシナリオ実行が完了しました。");
+                    try {
+                        // Excelの行を1行ずつループ実行する処理
+                        executeSheetSteps(testId, detailSheet, formatter);
 
-                } catch (Exception e) {
-                    System.err.println("❌ [FAILURE] " + testId + " 実行中にエラーが発生しました: " + e.getMessage());
-                    takeScreenshot(testId, "ERROR"); // エラー時スクショ
-                    copyApiLog(testId, "ERROR_app-api.log"); // エラー時ログ
+                        // ★ APIログファイルのコピー保存
+                        copyApiLog(testId, "app-api.log");
+
+                        System.out.println("✅ [SUCCESS] " + testId + " のシナリオ実行が完了しました。");
+
+                    } catch (Exception e) {
+                        System.err.println("❌ [FAILURE] " + testId + " 実行中にエラーが発生しました: " + e.getMessage());
+                        takeScreenshot(testId, "ERROR"); // エラー時スクショ
+                        copyApiLog(testId, "ERROR_app-api.log"); // エラー時ログ
+                    }
+
+                    Thread.sleep(1000);
                 }
-
-                Thread.sleep(1000);
+            } catch (Exception e) {
+                System.err.println("❌ Excelファイル（" + excelFile.getName() + "）の読み込み中にエラーが発生しました: " + e.getMessage());
             }
         }
     }
@@ -224,6 +241,11 @@ public class MeetingAutoTest {
 
                     FileUtils.copyFile(elemSrcFile, elemDestFile);
                     System.out.println(" 📸 【ピンポイント撮影】 エリア要素のスクショを保存しました: " + elemDestFile.getAbsolutePath());
+                    break;
+
+                case "NAVIGATE": // 指定URLへ直接移動
+                    System.out.println(" 🌐 画面移動: " + inputValue);
+                    driver.get(inputValue);
                     break;
 
                 default:
