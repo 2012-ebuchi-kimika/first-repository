@@ -1,23 +1,76 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
-<div id="groupManagementModal" class="modal-overlay">
+<div id="groupManagementModal" class="modal-overlay" style="display: none;">
   <div class="modal-content group-modal-content">
     
     <div class="modal-header group-modal-header">
-      <span class="group-modal-title">⚙️ 招待グループの管理</span>
+      <span class="group-modal-title" id="groupModalHeaderTitle">⚙️ 招待グループの参照・管理</span>
       <button type="button" id="btn-close-group-modal" class="modal-close-btn" onclick="closeGroupModal()">&times;</button>
     </div>
     
+    <!-- 閲覧モード用の2カラムレイアウト表示エリア -->
+    <div id="groupViewOnlyArea" style="display: none;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; min-height: 320px;">
+        
+        <!-- 左エリア：グループ一覧 ＆ 検索 -->
+        <div class="group-col-box" style="display: flex; flex-direction: column; width: 100%; box-sizing: border-box;">
+          <label class="form-label group-col-title" style="margin-bottom: 6px;">📋 登録済みグループ一覧</label>
+          
+          <div style="margin-bottom: 6px;">
+            <input type="text" id="viewGroupSearchInput" class="form-input" 
+                   placeholder="🔍 グループ名で検索..." oninput="filterViewGroupList()"
+                   style="width: 100%; box-sizing: border-box; padding: 5px 8px; font-size: 8.5pt;">
+          </div>
+
+          <!-- ★ カード同士の上下間隔（縦幅）をキュッと詰めた領域 -->
+          <div id="viewGroupListContainer" style="flex: 1; max-height: 280px; overflow-y: auto; padding-right: 2px; width: 100%; box-sizing: border-box;">
+            <c:choose>
+              <c:when test="${empty groups}">
+                <div class="group-empty-msg">登録されたグループはありません</div>
+              </c:when>
+              <c:otherwise>
+                <c:forEach var="g" items="${groups}">
+                  <c:if test="${not empty g.groupName}">
+                    <!-- ★ !important で縦余白とカードの厚みをコンパクトに強制適用 -->
+                    <div class="group-card-item view-group-card" 
+                         data-group-name="<c:out value='${g.groupName}'/>"
+                         data-group-members="<c:out value='${g.members}'/>"
+                         onclick="selectGroupForView(this)"
+                         style="cursor: pointer; padding: 6px 10px !important; margin-bottom: 4px !important; min-height: unset !important; border: 1px solid #e2e8f0; border-left: 4px solid #0284c7; border-radius: 4px; background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: all 0.15s ease-in-out; width: 100%; box-sizing: border-box;">
+                      <b style="font-size: 8.5pt; color: #0f172a; line-height: 1.2;"><c:out value="${g.groupName}"/></b>
+                    </div>
+                  </c:if>
+                </c:forEach>
+              </c:otherwise>
+            </c:choose>
+          </div>
+        </div>
+
+        <!-- 右エリア：選択グループの所属メンバー（日本語名 ＋ アドレス） -->
+        <div class="group-col-box" style="display: flex; flex-direction: column; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; width: 100%; box-sizing: border-box;">
+          <label class="form-label group-col-title" style="border-bottom: 2px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 6px;">
+            👥 所属メンバー詳細：<span id="selectedGroupNameTitle" style="color: #0284c7; font-weight: bold;">(左のグループを選択してください)</span>
+          </label>
+
+          <div id="selectedGroupMembersList" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; max-height: 280px; padding-right: 2px; width: 100%; box-sizing: border-box;">
+            <div style="color: #94a3b8; font-size: 8.5pt; text-align: center; padding-top: 30px;">
+              👈 左エリアのグループをクリックすると<br>所属メンバーが表示されます
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 編集モード用の3カラムレイアウトフォームエリア（管理者用：影響なし） -->
     <form id="groupForm" onsubmit="return handleAddGroup(event)" novalidate class="group-form">
       <input type="hidden" id="editingGroupId" name="groupId" value="">
 
-      <div class="group-grid-3col">
+      <div class="group-grid-3col" id="groupModalGrid">
         
-        <div class="group-col-box">
-          <label class="form-label group-col-title">
-            📋 登録済みグループ一覧
-          </label>
+        <div class="group-col-box" id="groupColList">
+          <label class="form-label group-col-title">📋 登録済みグループ一覧</label>
           
           <div id="registeredGroupList" class="group-registered-list">
             <c:choose>
@@ -31,7 +84,6 @@
                       <div class="group-card-header">
                         <b class="group-name-text group-card-title">・<c:out value="${g.groupName}"/></b>
                         <div class="group-action-btns">
-                          <!-- data-* 属性で安全に保持 -->
                           <button type="button" 
                                   class="group-btn-edit" 
                                   data-group-id="${g.groupId}" 
@@ -87,9 +139,7 @@
         </div>
 
         <div class="group-col-box">
-          <label class="form-label group-col-title">
-            👤 グループメンバー選択
-          </label>
+          <label class="form-label group-col-title">👤 グループメンバー選択</label>
           
           <div style="margin-bottom: 12px;">
             <input type="text" id="groupMemberSearchInput" class="form-input group-member-search" placeholder="🔍 名前・メールで絞り込み..." oninput="filterGroupMemberList()">
@@ -119,25 +169,115 @@
 
       </div>
       
-      <div class="modal-footer group-footer-flex">
-        <button type="button" id="btn-close-group-modal-footer" class="btn-secondary group-btn-close" onclick="closeGroupModal()">閉じる</button>
-        <button type="submit" id="submitGroupBtn" class="btn-primary group-btn-submit">
-          グループを追加保存
-        </button>
+      <div class="modal-footer group-footer-flex" id="groupFormFooter">
+        <button type="button" class="btn-secondary group-btn-close" onclick="closeGroupModal()">閉じる</button>
+        <button type="submit" id="submitGroupBtn" class="btn-primary group-btn-submit">グループを追加保存</button>
       </div>
     </form>
+
+    <!-- 閲覧モード用の閉じるフッター -->
+    <div class="modal-footer" id="groupViewFooter" style="display: none; justify-content: flex-end;">
+      <button type="button" class="btn-secondary" onclick="closeGroupModal()">閉じる</button>
+    </div>
+
   </div>
 </div>
 
 <script>
-  function openGroupModal() {
+  // システム全ユーザーのマッピング
+  const systemUserMap = {};
+  <c:forEach var="u" items="${users}">
+    systemUserMap["<c:out value='${u.email}'/>".toLowerCase().trim()] = "<c:out value='${u.name}'/>";
+  </c:forEach>
+
+  function openGroupModal(canEdit) {
     const modal = document.getElementById('groupManagementModal');
-    if (modal) modal.style.display = 'flex';
+    if (!modal) return;
+
+    const isEditable = (canEdit === undefined) ? true : canEdit;
+    
+    const viewArea = document.getElementById('groupViewOnlyArea');
+    const viewFooter = document.getElementById('groupViewFooter');
+    const editForm = document.getElementById('groupForm');
+    const titleElem = document.getElementById('groupModalHeaderTitle');
+
+    if (isEditable) {
+      if (viewArea) viewArea.style.display = 'none';
+      if (viewFooter) viewFooter.style.display = 'none';
+      if (editForm) editForm.style.display = 'block';
+      if (titleElem) titleElem.innerText = '⚙️ 招待グループの編集・管理';
+    } else {
+      if (editForm) editForm.style.display = 'none';
+      if (viewArea) viewArea.style.display = 'block';
+      if (viewFooter) viewFooter.style.display = 'flex';
+      if (titleElem) titleElem.innerText = '👥 招待グループ一覧（閲覧モード）';
+
+      const firstCard = modal.querySelector('.view-group-card');
+      if (firstCard) {
+        selectGroupForView(firstCard);
+      }
+    }
+
+    modal.style.display = 'flex';
   }
 
   function closeGroupModal() {
     const modal = document.getElementById('groupManagementModal');
     if (modal) modal.style.display = 'none';
+  }
+
+  function selectGroupForView(cardElem) {
+    document.querySelectorAll('.view-group-card').forEach(c => {
+      c.style.background = '#ffffff';
+      c.style.borderColor = '#e2e8f0';
+      c.style.borderLeft = '4px solid #0284c7';
+      c.style.boxShadow = '0 1px 2px rgba(0,0,0,0.02)';
+    });
+
+    cardElem.style.background = '#e0f2fe';
+    cardElem.style.borderColor = '#7dd3fc';
+    cardElem.style.borderLeft = '4px solid #0369a1';
+    cardElem.style.boxShadow = '0 1px 3px rgba(2, 132, 199, 0.1)';
+
+    const groupName = cardElem.getAttribute('data-group-name');
+    const membersStr = cardElem.getAttribute('data-group-members') || '';
+
+    document.getElementById('selectedGroupNameTitle').innerText = groupName;
+
+    const container = document.getElementById('selectedGroupMembersList');
+    container.innerHTML = '';
+
+    const emailList = membersStr.split(',').map(e => e.trim()).filter(e => e !== '');
+
+    if (emailList.length === 0) {
+      container.innerHTML = '<div style="color: #64748b; font-size: 8.5pt; padding: 10px;">メンバーが登録されていません</div>';
+      return;
+    }
+
+    emailList.forEach(email => {
+      const lowerEmail = email.toLowerCase();
+      const userName = systemUserMap[lowerEmail] || '名前未設定';
+
+      const itemHtml = 
+        '<div style="background: #ffffff; padding: 5px 8px; border-radius: 4px; border: 1px solid #cbd5e1; border-left: 3px solid #38bdf8; font-size: 8.5pt; display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">' +
+          '<span>👤 <strong style="color: #0f172a; font-size: 8.5pt;">' + escapeHtml(userName) + '</strong></span>' +
+          '<span style="color: #64748b; font-size: 8pt; font-family: monospace;">' + escapeHtml(email) + '</span>' +
+        '</div>';
+      container.insertAdjacentHTML('beforeend', itemHtml);
+    });
+  }
+
+  function filterViewGroupList() {
+    const query = document.getElementById('viewGroupSearchInput').value.toLowerCase().trim();
+    const cards = document.querySelectorAll('.view-group-card');
+    cards.forEach(card => {
+      const groupName = card.getAttribute('data-group-name').toLowerCase();
+      if (groupName.includes(query)) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
   }
 
   function validateGroupForm(groupName, members) {
@@ -146,32 +286,26 @@
       document.getElementById('newGroupName').focus();
       return false;
     }
-
     if (groupName.length > 50) {
       alert('⚠️ グループ名は50文字以内で入力してください。（現在: ' + groupName.length + '文字）');
       document.getElementById('newGroupName').focus();
       return false;
     }
-
     if (!members) {
       alert('⚠️ グループメンバーを最低1名選択（または入力）してください。');
       document.getElementById('newGroupMembers').focus();
       return false;
     }
-
     return true;
   }
 
   function handleAddGroup(event) {
     event.preventDefault();
-
     const editingId = document.getElementById('editingGroupId').value;
     const groupName = document.getElementById('newGroupName').value.trim();
     const members = document.getElementById('newGroupMembers').value.trim();
 
-    if (!validateGroupForm(groupName, members)) {
-      return false;
-    }
+    if (!validateGroupForm(groupName, members)) return false;
 
     const payload = {
       groupId: editingId ? parseInt(editingId) : null,
@@ -185,47 +319,11 @@
       body: JSON.stringify(payload)
     })
     .then(res => {
-      if (!res.ok) {
-        throw new Error('サーバーエラーが発生しました');
-      }
+      if (!res.ok) throw new Error('サーバーエラーが発生しました');
       return res.json();
     })
     .then(savedGroup => {
-      const noMsg = document.getElementById('noGroupMsg');
-      if (noMsg) noMsg.style.display = 'none';
-
-      const container = document.getElementById('registeredGroupList');
-
-      if (editingId) {
-        const existingCard = document.getElementById('group-card-' + editingId);
-        if (existingCard) {
-          existingCard.querySelector('.group-name-text').innerText = '・' + savedGroup.groupName;
-          existingCard.querySelector('.group-members-text').innerText = savedGroup.members;
-          
-          const editBtn = existingCard.querySelector('.group-btn-edit');
-          if (editBtn) {
-            editBtn.setAttribute('data-group-name', savedGroup.groupName);
-            editBtn.setAttribute('data-group-members', savedGroup.members);
-          }
-        }
-      } else {
-        const newHtml = 
-          '<div class="group-card-item" id="group-card-' + savedGroup.groupId + '">' +
-            '<div class="group-card-header">' +
-              '<b class="group-name-text group-card-title">・' + escapeHtml(savedGroup.groupName) + '</b>' +
-              '<div class="group-action-btns">' +
-                '<button type="button" class="group-btn-edit" data-group-id="' + savedGroup.groupId + '" data-group-name="' + escapeHtml(savedGroup.groupName) + '" data-group-members="' + escapeHtml(savedGroup.members) + '" onclick="handleEditGroupClick(this)">[編集]</button>' +
-                '<button type="button" class="group-btn-delete" data-group-id="' + savedGroup.groupId + '" data-group-name="' + escapeHtml(savedGroup.groupName) + '" onclick="handleDeleteGroupClick(this)">[削除]</button>' +
-              '</div>' +
-            '</div>' +
-            '<div class="group-members-text">' +
-              escapeHtml(savedGroup.members) +
-            '</div>' +
-          '</div>';
-        container.insertAdjacentHTML('afterbegin', newHtml);
-      }
-
-      resetGroupForm();
+      location.reload();
     })
     .catch(err => {
       console.error(err);
@@ -234,7 +332,6 @@
     return false;
   }
 
-  // data-* 属性から値を安全に取得して編集処理へ
   function handleEditGroupClick(btn) {
     const id = btn.getAttribute('data-group-id');
     const name = btn.getAttribute('data-group-name');
@@ -242,7 +339,6 @@
     editGroup(id, name, members);
   }
 
-  // data-* 属性から値を安全に取得して削除処理へ
   function handleDeleteGroupClick(btn) {
     const id = btn.getAttribute('data-group-id');
     const name = btn.getAttribute('data-group-name');
@@ -256,8 +352,7 @@
     })
     .then(res => {
       if (res.ok) {
-        const card = document.getElementById('group-card-' + groupId);
-        if (card) card.remove();
+        location.reload();
       } else {
         alert('削除処理に失敗しました。');
       }
@@ -300,7 +395,7 @@
   }
 
   function syncGroupMembers() {
-    const checkedBoxes = document.querySelectorAll('.group-member-checkbox:checked');
+    const checkedBoxes = document.getElementById('groupMemberListContainer').querySelectorAll('.group-member-checkbox:checked');
     const emails = Array.from(checkedBoxes).map(cb => cb.value);
     document.getElementById('newGroupMembers').value = emails.join(', ');
   }
@@ -318,7 +413,6 @@
     });
   }
 
-  // ★ 修正箇所: JSPエラーを防ぐため正規表現スラッシュ(/)を補正して構文エラーを完全解消
   function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');

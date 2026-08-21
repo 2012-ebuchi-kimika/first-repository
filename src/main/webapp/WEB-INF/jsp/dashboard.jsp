@@ -21,23 +21,28 @@
     <div class="navbar navbar-slim">
       <div class="brand-logo">⚡ AI Smart Meeting System</div>
       <div>
-        trainee1405@company.com <span class="user-badge">管理者</span>
+        <span id="loginUserEmail"><c:out value="${empty loginEmail ? 'yamada_sub@example.com' : loginEmail}"/></span>
+        <span class="user-badge"><c:out value="${empty userRoleName ? '一般ユーザー' : userRoleName}"/></span>
+        
         <button type="button" id="btn-open-group-modal" class="btn-secondary"
-          style="margin-left: 10px; padding: 4px 10px; font-size: 8.5pt;" onclick="openGroupModal()">⚙️ グループ管理</button>
+          style="margin-left: 10px; padding: 4px 10px; font-size: 8.5pt;">👥 グループ一覧・管理</button>
+          
+        <a href="${pageContext.request.contextPath}/logout" class="btn-secondary" 
+          style="margin-left: 8px; padding: 4px 10px; font-size: 8.5pt; text-decoration: none; color: #ef4444; border-color: #fca5a5;">🚪 ログアウト</a>
       </div>
     </div>
 
     <div class="main-content">
 
       <!-- ★ 1行目: アクションバー（新規作成 ＆ 検索バー） -->
-      <div class="action-bar action-bar-slim" style="display: flex; justify-content: space-between; align-items: center;">
+      <div class="action-bar action-bar-slim"
+        style="display: flex; justify-content: space-between; align-items: center;">
         <button type="button" id="btn-open-create-modal" class="btn-primary btn-primary-slim"
           onclick="openCreateModal()">＋ 新規会議を作成</button>
 
         <div class="search-container">
           <div class="search-box-group" style="display: flex; align-items: center; gap: 8px;">
-            
-            <!-- ★ 修正: エラーメッセージを検索ボックスの「左側」に配置（ボタンやテキストエリアの位置を固定） -->
+
             <span id="validationError"
               style="color: #ef4444; font-size: 8pt; font-weight: bold; display: none; background: #fef2f2; border: 1px solid #fca5a5; padding: 4px 8px; border-radius: 4px; white-space: nowrap;">
             </span>
@@ -112,10 +117,13 @@
                       </div>
 
                       <div class="meeting-date" style="display: flex; align-items: center; gap: 6px;">
-                        <span style="white-space: nowrap;">🕒 <c:out value="${m.startTime}" /></span>
+                        <span style="white-space: nowrap;">🕒
+                          <c:out value="${m.startTime}" />
+                        </span>
                         <span>|</span>
                         <div class="attendee-tooltip-container" title="👥 クリック/ホバーで全リスト表示">
-                          👥 参加者: <c:out value="${empty m.attendeeEmails ? '未設定' : m.attendeeEmails}" />
+                          👥 参加者:
+                          <c:out value="${empty m.attendeeEmails ? '未設定' : m.attendeeEmails}" />
                           <c:if test="${not empty m.attendeeEmails}">
                             <div class="tooltip-text">
                               <strong style="color: #38bdf8; display: block; margin-bottom: 2px;">👥 全参加者メンバー:</strong>
@@ -505,7 +513,6 @@
       document.getElementById('taskHeaderTitle').innerText = showCompleted ?
         '📋 タスク一覧 (全件)' : '☑️ 未完了タスク';
 
-      // 50文字チェック（エラー表示）
       if (inputElem && inputElem.value.length > 50) {
         inputElem.classList.add('error');
         if (errorElem) {
@@ -597,6 +604,35 @@
       restoreFilterState();
       filterDashboardAll();
     });
+
+    // グループ一覧・管理ボタン押下時の処理（閲覧は全員許可、編集可否をモーダルへ引き渡し）
+    document.getElementById('btn-open-group-modal').addEventListener('click', function (e) {
+      e.preventDefault();
+
+      const emailElem = document.getElementById('loginUserEmail');
+      const currentUserEmail = emailElem ? emailElem.innerText.trim() : '';
+
+      if (!currentUserEmail) {
+        alert('ログイン情報が取得できませんでした。');
+        return;
+      }
+
+      fetch(`${pageContext.request.contextPath}/api/users/check-permission?email=\${encodeURIComponent(currentUserEmail)}`)
+        .then(response => {
+          if (!response.ok) throw new Error('ネットワーク応答エラー');
+          return response.json();
+        })
+        .then(data => {
+          // 権限フラグ (hasPermission) を openGroupModal へ引き渡す（閲覧は全員可能）
+          openGroupModal(data.hasPermission);
+        })
+        .catch(error => {
+          console.error('権限チェック失敗:', error);
+          // エラー時も閲覧モード (canEdit = false) でモーダルを開く
+          openGroupModal(false);
+        });
+    });
+
   </script>
 
 </body>

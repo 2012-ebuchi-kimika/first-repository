@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.meeting_app_api.mapper.UserPermissionMapper">
+
+    <!-- Viewから指定アドレスの権限情報を取得 -->
+    <select id="findPermissionsByEmail" resultType="com.example.meeting_app_api.entity.UserPermission">
+        SELECT 
+            email,
+            role_id AS roleId,
+            role_name AS roleName
+        FROM 
+            v_user_permissions
+        WHERE 
+            email = #{email}
+    </select>
+
+</mapper>

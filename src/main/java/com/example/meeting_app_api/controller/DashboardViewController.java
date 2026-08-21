@@ -5,6 +5,10 @@ import com.example.meeting_app_api.entity.Meeting;
 import com.example.meeting_app_api.entity.Task;
 import com.example.meeting_app_api.entity.User;
 import com.example.meeting_app_api.service.DashboardService;
+import com.example.meeting_app_api.service.UserService;
+
+import jakarta.servlet.http.HttpSession;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,16 +20,26 @@ import java.util.List;
 public class DashboardViewController {
 
     private final DashboardService dashboardService;
+    private final UserService userService; // ★ UserService を追加
 
-    public DashboardViewController(DashboardService dashboardService) {
+    // ★ コンストラクタで UserService も受け取るように修正
+    public DashboardViewController(DashboardService dashboardService, UserService userService) {
         this.dashboardService = dashboardService;
+        this.userService = userService;
     }
 
     @GetMapping("/dashboard")
     public String showDashboard(
             @RequestParam(name = "keyword", required = false) String keyword,
             @RequestParam(name = "showAll", required = false, defaultValue = "false") boolean showAll,
+            HttpSession session,
             Model model) {
+
+        // ログインチェック：セッションにアドレスがなければログイン画面へ
+        String loginEmail = (String) session.getAttribute("loginEmail");
+        if (loginEmail == null || loginEmail.trim().isEmpty()) {
+            return "redirect:/login";
+        }
 
         // 1. 会議一覧
         List<Meeting> meetings = dashboardService.getDashboardMeetings(keyword, showAll);
@@ -46,6 +60,11 @@ public class DashboardViewController {
         // 5. 招待グループ一覧
         List<Group> groups = dashboardService.getDashboardGroups();
         model.addAttribute("groups", groups);
+
+        // 6. ログインユーザー情報と役職のセット（検証用アドレス）
+        String userRoleName = userService.getUserRoleName(loginEmail);
+        model.addAttribute("loginEmail", loginEmail);
+        model.addAttribute("userRoleName", userRoleName);
 
         return "dashboard";
     }
